@@ -6,13 +6,16 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // SM83 CPU states
 const (
 	FETCH_INSTRUCTION     = 1
 	EXECUTE_INSTRUCTION_1 = 2
 	EXECUTE_INSTRUCTION_2 = 3
+	EXECUTE_INSTRUCTION_3 = 4
 )
 
 // SM83 CPU flags
@@ -24,7 +27,15 @@ const (
 
 // opcode constants
 const (
-	NOOP   = uint8(0x00)
+	NOP          = uint8(0x00)
+	LD_BC_nn     = uint8(0x01)
+	LD_ADDR_BC_A = uint8(0x02)
+	INC_BC       = uint8(0x03)
+	INC_B        = uint8(0x04)
+	DEC_B        = uint8(0x05)
+	LD_B_n       = uint8(0x06)
+	RLCA         = uint8(0x07)
+
 	INC_A  = uint8(0x3c)
 	DEC_A  = uint8(0x3d)
 	LD_A_n = uint8(0x3e)
@@ -32,11 +43,10 @@ const (
 
 // SM83 CPU internal registers and connections
 type SM83_CPU struct {
-	pc  uint16
-	sp  uint16
-	ir  uint8
-	ie  uint8
-	aux uint8
+	pc uint16
+	sp uint16
+	ir uint8
+	ie uint8
 
 	a     uint8
 	flags uint8
@@ -44,14 +54,17 @@ type SM83_CPU struct {
 	de    uint16
 	hl    uint16
 
+	trace     bool
 	cpu_state uint8
+	n_lsb     uint8
+	n_msb     uint8
 
 	memoryBank        []memory
 	memoryBankAddress []uint16
 }
 
 // create a new SM83 CPU
-func NewSM83_CPU() *SM83_CPU {
+func NewSM83_CPU(trace bool) *SM83_CPU {
 
 	return &SM83_CPU{
 		pc:    0,
@@ -64,6 +77,7 @@ func NewSM83_CPU() *SM83_CPU {
 		de:    0,
 		hl:    0,
 
+		trace:     trace,
 		cpu_state: FETCH_INSTRUCTION,
 
 		memoryBank:        nil,
@@ -97,12 +111,18 @@ func (c *SM83_CPU) MachineCycle() error {
 	case FETCH_INSTRUCTION:
 		err = c.fetchInstruction()
 		if err != nil {
+			if c.trace {
+				fmt.Printf("[error] %s\n", err.Error())
+			}
 			return err
 		}
 
-	case EXECUTE_INSTRUCTION_1, EXECUTE_INSTRUCTION_2:
+	case EXECUTE_INSTRUCTION_1, EXECUTE_INSTRUCTION_2, EXECUTE_INSTRUCTION_3:
 		err = c.executeInstruction()
 		if err != nil {
+			if c.trace {
+				fmt.Printf("[error] %s\n", err.Error())
+			}
 			return err
 		}
 	}
@@ -131,21 +151,68 @@ func (c *SM83_CPU) fetchInstruction() error {
 }
 
 // fetch one instruction argument from memory
-func (c *SM83_CPU) fetchInstructionArgument(address uint16) (uint8, error) {
+func (c *SM83_CPU) fetchInstructionArgument() (uint8, error) {
+	var err error
+	var aux uint8
+
 	for i := 0; i < len(c.memoryBankAddress); i++ {
-		if address >= c.memoryBankAddress[i] && address < c.memoryBankAddress[i]+c.memoryBank[i].Len() {
-			return c.memoryBank[i].ReadByte(address)
+		if c.pc >= c.memoryBankAddress[i] && c.pc < c.memoryBankAddress[i]+c.memoryBank[i].Len() {
+			aux, err = c.memoryBank[i].ReadByte(c.pc)
+			if err != nil {
+				return 0, err
+			}
+			break
 		}
 	}
 
-	return 0, fmt.Errorf("memory address not available")
+	c.pc++
+
+	return aux, nil
+}
+
+// write a byte into memory address
+func (c *SM83_CPU) writeByteIntoMemory(address uint16, value uint8) error {
+	var err error
+
+	for i := 0; i < len(c.memoryBankAddress); i++ {
+		if address >= c.memoryBankAddress[i] && address < c.memoryBankAddress[i]+c.memoryBank[i].Len() {
+			err = c.memoryBank[i].WriteByte(address, value)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no memory bank connected to address: %04x", address)
 }
 
 // execute instruction
 func (c *SM83_CPU) executeInstruction() error {
 	switch c.ir {
-	case NOOP:
-		return c.fetchInstruction()
+	case NOP:
+		return c.executeInstruction_NOP()
+
+	case LD_BC_nn:
+		return c.executeInstruction_LD_BC_nn()
+
+	case LD_ADDR_BC_A:
+		return c.executeInstruction_LD_ADDR_BC_A()
+
+	case INC_BC:
+		return c.executeInstruction_INC_BC()
+
+	case INC_B:
+		return c.executeInstruction_INC_B()
+
+	case DEC_B:
+		return c.executeInstruction_DEC_B()
+
+	case LD_B_n:
+		return c.executeInstruction_LD_B_n()
+
+	case RLCA:
+		return c.executeInstruction_RLCA()
 
 	case INC_A:
 		return c.executeInstruction_INC_A()
@@ -160,6 +227,187 @@ func (c *SM83_CPU) executeInstruction() error {
 	return nil
 }
 
+// execute instruction NOP
+func (c *SM83_CPU) executeInstruction_NOP() error {
+
+	if c.trace {
+		fmt.Printf("[trace] NOP\n")
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_BC_nn
+func (c *SM83_CPU) executeInstruction_LD_BC_nn() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTE_INSTRUCTION_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+
+		c.cpu_state = EXECUTE_INSTRUCTION_2
+
+		return err
+
+	case EXECUTE_INSTRUCTION_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+
+		c.cpu_state = EXECUTE_INSTRUCTION_3
+
+		return err
+
+	case EXECUTE_INSTRUCTION_3:
+		c.bc = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD BC, nn: 0x%04x\n", c.bc)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_ADDR_BC_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTE_INSTRUCTION_1:
+		err = c.writeByteIntoMemory(c.bc, c.a)
+
+		c.cpu_state = EXECUTE_INSTRUCTION_2
+
+		return err
+
+	case EXECUTE_INSTRUCTION_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (BC), A: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction INC_BC
+func (c *SM83_CPU) executeInstruction_INC_BC() error {
+
+	c.bc++
+
+	if c.bc == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] INC BC: 0x%04x\n", c.bc)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction INC_B
+func (c *SM83_CPU) executeInstruction_INC_B() error {
+
+	msb := uint8((c.bc & 0xff00) >> 8)
+	lsb := uint8(c.bc & 0x00ff)
+
+	msb++
+	c.bc = uint16(msb)<<8 | uint16(lsb)
+
+	if msb == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] INC B: 0x%02x\n", msb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction DEC_B
+func (c *SM83_CPU) executeInstruction_DEC_B() error {
+
+	msb := uint8((c.bc & 0xff00) >> 8)
+	lsb := uint8(c.bc & 0x00ff)
+
+	msb--
+	c.bc = uint16(msb)<<8 | uint16(lsb)
+
+	if msb == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] DEC B: 0x%02x\n", msb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_B_n
+func (c *SM83_CPU) executeInstruction_LD_B_n() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTE_INSTRUCTION_1:
+		c.n_msb, err = c.fetchInstructionArgument()
+
+		c.cpu_state = EXECUTE_INSTRUCTION_2
+
+		return err
+
+	case EXECUTE_INSTRUCTION_2:
+		c.bc = uint16(c.n_msb)<<8 | uint16(c.bc&0x00ff)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD B, n: 0x%02x\n", c.n_msb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction RLCA
+func (c *SM83_CPU) executeInstruction_RLCA() error {
+
+	if c.a&0x80 == 0x80 {
+		c.a = c.a<<1 | 0x01
+	} else {
+		c.a = c.a << 1
+	}
+
+	if c.a == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] RLCA: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
 // execute instruction INC_A
 func (c *SM83_CPU) executeInstruction_INC_A() error {
 
@@ -171,7 +419,10 @@ func (c *SM83_CPU) executeInstruction_INC_A() error {
 		c.flags &= ^FLAG_Z
 	}
 	c.flags &= ^FLAG_N
-	//fmt.Printf("[debug] INC A: 0x%02x\n", c.a)
+
+	if c.trace {
+		fmt.Printf("[trace] INC A: 0x%02x\n", c.a)
+	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
@@ -188,7 +439,10 @@ func (c *SM83_CPU) executeInstruction_DEC_A() error {
 		c.flags &= ^FLAG_Z
 	}
 	c.flags &= ^FLAG_N
-	//fmt.Printf("[debug] DEC A: 0x%02x\n", c.a)
+
+	if c.trace {
+		fmt.Printf("[trace] DEC A: 0x%02x\n", c.a)
+	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
@@ -200,20 +454,19 @@ func (c *SM83_CPU) executeInstruction_LD_A_n() error {
 
 	switch c.cpu_state {
 	case EXECUTE_INSTRUCTION_1:
-		c.aux, err = c.fetchInstructionArgument(c.pc)
-		if err != nil {
-			return err
-		}
+		c.n_msb, err = c.fetchInstructionArgument()
 
-		c.pc++
 		c.cpu_state = EXECUTE_INSTRUCTION_2
 
-		return nil
+		return err
 
 	case EXECUTE_INSTRUCTION_2:
-		c.a = c.aux
+		c.a = c.n_msb
 	}
-	fmt.Printf("[debug] LD A, n: 0x%02x\n", c.a)
+
+	if c.trace {
+		fmt.Printf("[trace] LD A, n: 0x%02x\n", c.a)
+	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
