@@ -1,0 +1,44 @@
+name: Go Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  HOME_PATH: ${{ github.workspace }}
+  SOURCE_PATH: .
+  CMD_PATH: ./cmd
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Korn shell
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install ksh
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Build
+        shell: bash
+        run: |
+          cd ${HOME_PATH}
+          echo
+          # ./cmd/build.sh
+
+      - name: Unit Tests
+        shell: bash
+        run: |
+          cd ${HOME_PATH}
+          echo
+          ./cmd/unit-test.sh

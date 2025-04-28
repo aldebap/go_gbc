@@ -1,4 +1,7 @@
 # Go GBC emulator
+
+[![Go Build](https://github.com/aldebap/go_gbc/actions/workflows/go.yml/badge.svg)](https://github.com/aldebap/go_gbc/actions/workflows/go.yml)
+
 One day I randomly watched a YouTube video stating that "You Should Make a GameBoy Emulator":
 
 https://www.youtube.com/watch?v=hy2yY5a1Z-0
