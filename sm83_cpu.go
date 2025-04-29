@@ -16,6 +16,7 @@ const (
 	EXECUTE_INSTRUCTION_1 = 2
 	EXECUTE_INSTRUCTION_2 = 3
 	EXECUTE_INSTRUCTION_3 = 4
+	EXECUTE_INSTRUCTION_4 = 5
 )
 
 // SM83 CPU flags
@@ -39,6 +40,8 @@ const (
 	INC_A  = uint8(0x3c)
 	DEC_A  = uint8(0x3d)
 	LD_A_n = uint8(0x3e)
+
+	LD_A_ADDR_nn = uint8(0xfa)
 )
 
 // SM83 CPU internal registers and connections
@@ -117,7 +120,7 @@ func (c *SM83_CPU) MachineCycle() error {
 			return err
 		}
 
-	case EXECUTE_INSTRUCTION_1, EXECUTE_INSTRUCTION_2, EXECUTE_INSTRUCTION_3:
+	case EXECUTE_INSTRUCTION_1, EXECUTE_INSTRUCTION_2, EXECUTE_INSTRUCTION_3, EXECUTE_INSTRUCTION_4:
 		err = c.executeInstruction()
 		if err != nil {
 			if c.trace {
@@ -172,19 +175,26 @@ func (c *SM83_CPU) fetchInstructionArgument() (uint8, error) {
 
 // write a byte into memory address
 func (c *SM83_CPU) writeByteIntoMemory(address uint16, value uint8) error {
-	var err error
 
 	for i := 0; i < len(c.memoryBankAddress); i++ {
 		if address >= c.memoryBankAddress[i] && address < c.memoryBankAddress[i]+c.memoryBank[i].Len() {
-			err = c.memoryBank[i].WriteByte(address, value)
-			if err != nil {
-				return err
-			}
-			return nil
+			return c.memoryBank[i].WriteByte(address-c.memoryBankAddress[i], value)
 		}
 	}
 
 	return fmt.Errorf("no memory bank connected to address: %04x", address)
+}
+
+// read a byte from memory address
+func (c *SM83_CPU) readByteFromMemory(address uint16) (uint8, error) {
+
+	for i := 0; i < len(c.memoryBankAddress); i++ {
+		if address >= c.memoryBankAddress[i] && address < c.memoryBankAddress[i]+c.memoryBank[i].Len() {
+			return c.memoryBank[i].ReadByte(address - c.memoryBankAddress[i])
+		}
+	}
+
+	return 0, fmt.Errorf("no memory bank connected to address: %04x", address)
 }
 
 // execute instruction
@@ -222,6 +232,9 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_A_n:
 		return c.executeInstruction_LD_A_n()
+
+	case LD_A_ADDR_nn:
+		return c.executeInstruction_LD_A_ADDR_nn()
 	}
 
 	return nil
@@ -466,6 +479,44 @@ func (c *SM83_CPU) executeInstruction_LD_A_n() error {
 
 	if c.trace {
 		fmt.Printf("[trace] LD A, n: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_A_ADDR_nn
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_nn() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTE_INSTRUCTION_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+
+		c.cpu_state = EXECUTE_INSTRUCTION_2
+
+		return err
+
+	case EXECUTE_INSTRUCTION_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+
+		c.cpu_state = EXECUTE_INSTRUCTION_3
+
+		return err
+
+	case EXECUTE_INSTRUCTION_3:
+		c.n_lsb, err = c.readByteFromMemory(uint16(c.n_msb)<<8 | uint16(c.n_lsb))
+
+		c.cpu_state = EXECUTE_INSTRUCTION_4
+
+		return err
+
+	case EXECUTE_INSTRUCTION_4:
+		c.a = c.n_lsb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD A, (nn): 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
