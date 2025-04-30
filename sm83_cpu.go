@@ -12,34 +12,39 @@ import (
 
 // SM83 CPU states
 const (
-	FETCH_INSTRUCTION     = 1
-	EXECUTE_INSTRUCTION_1 = 2
-	EXECUTE_INSTRUCTION_2 = 3
-	EXECUTE_INSTRUCTION_3 = 4
-	EXECUTE_INSTRUCTION_4 = 5
+	FETCHING_INSTRUCTION = 1
+	EXECUTION_CYCLE_1    = 2
+	EXECUTION_CYCLE_2    = 3
+	EXECUTION_CYCLE_3    = 4
+	EXECUTION_CYCLE_4    = 5
+	EXECUTION_CYCLE_5    = 6
 )
 
 // SM83 CPU flags
 const (
-	FLAG_Z = uint8(0x01)
-	FLAG_N = uint8(0x02)
-	FLAG_H = uint8(0x04)
+	FLAG_Z = uint8(0x80)
+	FLAG_N = uint8(0x40)
+	FLAG_H = uint8(0x20)
+	FLAG_C = uint8(0x10)
 )
 
 // opcode constants
 const (
-	NOP          = uint8(0x00)
-	LD_BC_nn     = uint8(0x01)
-	LD_ADDR_BC_A = uint8(0x02)
-	INC_BC       = uint8(0x03)
-	INC_B        = uint8(0x04)
-	DEC_B        = uint8(0x05)
-	LD_B_n       = uint8(0x06)
-	RLCA         = uint8(0x07)
+	NOP           = uint8(0x00)
+	LD_BC_nn      = uint8(0x01)
+	LD_ADDR_BC_A  = uint8(0x02)
+	INC_BC        = uint8(0x03)
+	INC_B         = uint8(0x04)
+	DEC_B         = uint8(0x05)
+	LD_B_n        = uint8(0x06)
+	RLCA          = uint8(0x07)
+	LD_ADDR_nn_SP = uint8(0x08)
 
-	INC_A  = uint8(0x3c)
-	DEC_A  = uint8(0x3d)
-	LD_A_n = uint8(0x3e)
+	JR_NC_e  = uint8(0x30)
+	LD_SP_nn = uint8(0x31)
+	INC_A    = uint8(0x3c)
+	DEC_A    = uint8(0x3d)
+	LD_A_n   = uint8(0x3e)
 
 	LD_A_ADDR_nn = uint8(0xfa)
 )
@@ -81,7 +86,7 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 		hl:    0,
 
 		trace:     trace,
-		cpu_state: FETCH_INSTRUCTION,
+		cpu_state: FETCHING_INSTRUCTION,
 
 		memoryBank:        nil,
 		memoryBankAddress: nil,
@@ -111,7 +116,7 @@ func (c *SM83_CPU) MachineCycle() error {
 	var err error
 
 	switch c.cpu_state {
-	case FETCH_INSTRUCTION:
+	case FETCHING_INSTRUCTION:
 		err = c.fetchInstruction()
 		if err != nil {
 			if c.trace {
@@ -120,7 +125,7 @@ func (c *SM83_CPU) MachineCycle() error {
 			return err
 		}
 
-	case EXECUTE_INSTRUCTION_1, EXECUTE_INSTRUCTION_2, EXECUTE_INSTRUCTION_3, EXECUTE_INSTRUCTION_4:
+	case EXECUTION_CYCLE_1, EXECUTION_CYCLE_2, EXECUTION_CYCLE_3, EXECUTION_CYCLE_4, EXECUTION_CYCLE_5:
 		err = c.executeInstruction()
 		if err != nil {
 			if c.trace {
@@ -148,7 +153,7 @@ func (c *SM83_CPU) fetchInstruction() error {
 	}
 
 	c.pc++
-	c.cpu_state = EXECUTE_INSTRUCTION_1
+	c.cpu_state = EXECUTION_CYCLE_1
 
 	return nil
 }
@@ -224,6 +229,12 @@ func (c *SM83_CPU) executeInstruction() error {
 	case RLCA:
 		return c.executeInstruction_RLCA()
 
+	case LD_ADDR_nn_SP:
+		return c.executeInstruction_LD_ADDR_nn_SP()
+
+	case LD_SP_nn:
+		return c.executeInstruction_LD_SP_nn()
+
 	case INC_A:
 		return c.executeInstruction_INC_A()
 
@@ -256,21 +267,19 @@ func (c *SM83_CPU) executeInstruction_LD_BC_nn() error {
 	var err error
 
 	switch c.cpu_state {
-	case EXECUTE_INSTRUCTION_1:
+	case EXECUTION_CYCLE_1:
 		c.n_lsb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_2
+		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
 
-	case EXECUTE_INSTRUCTION_2:
+	case EXECUTION_CYCLE_2:
 		c.n_msb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_3
+		c.cpu_state = EXECUTION_CYCLE_3
 
 		return err
 
-	case EXECUTE_INSTRUCTION_3:
+	case EXECUTION_CYCLE_3:
 		c.bc = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
 	}
 
@@ -287,14 +296,13 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
 	var err error
 
 	switch c.cpu_state {
-	case EXECUTE_INSTRUCTION_1:
+	case EXECUTION_CYCLE_1:
 		err = c.writeByteIntoMemory(c.bc, c.a)
-
-		c.cpu_state = EXECUTE_INSTRUCTION_2
+		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
 
-	case EXECUTE_INSTRUCTION_2:
+	case EXECUTION_CYCLE_2:
 	}
 
 	if c.trace {
@@ -378,14 +386,13 @@ func (c *SM83_CPU) executeInstruction_LD_B_n() error {
 	var err error
 
 	switch c.cpu_state {
-	case EXECUTE_INSTRUCTION_1:
+	case EXECUTION_CYCLE_1:
 		c.n_msb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_2
+		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
 
-	case EXECUTE_INSTRUCTION_2:
+	case EXECUTION_CYCLE_2:
 		c.bc = uint16(c.n_msb)<<8 | uint16(c.bc&0x00ff)
 	}
 
@@ -415,6 +422,75 @@ func (c *SM83_CPU) executeInstruction_RLCA() error {
 
 	if c.trace {
 		fmt.Printf("[trace] RLCA: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_ADDR_nn_SP
+func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_SP() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), uint8(c.sp&0x00ff))
+		c.cpu_state = EXECUTION_CYCLE_4
+
+		return err
+
+	case EXECUTION_CYCLE_4:
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb)+1, uint8((c.sp&0xff00)>>8))
+		c.cpu_state = EXECUTION_CYCLE_5
+
+		return err
+
+	case EXECUTION_CYCLE_5:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (nn), SP: 0x%04x\n", c.sp)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_SP_nn
+func (c *SM83_CPU) executeInstruction_LD_SP_nn() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		c.sp = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD SP, nn: 0x%04x\n", c.sp)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -466,14 +542,13 @@ func (c *SM83_CPU) executeInstruction_LD_A_n() error {
 	var err error
 
 	switch c.cpu_state {
-	case EXECUTE_INSTRUCTION_1:
+	case EXECUTION_CYCLE_1:
 		c.n_msb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_2
+		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
 
-	case EXECUTE_INSTRUCTION_2:
+	case EXECUTION_CYCLE_2:
 		c.a = c.n_msb
 	}
 
@@ -490,28 +565,25 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_nn() error {
 	var err error
 
 	switch c.cpu_state {
-	case EXECUTE_INSTRUCTION_1:
+	case EXECUTION_CYCLE_1:
 		c.n_lsb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_2
+		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
 
-	case EXECUTE_INSTRUCTION_2:
+	case EXECUTION_CYCLE_2:
 		c.n_msb, err = c.fetchInstructionArgument()
-
-		c.cpu_state = EXECUTE_INSTRUCTION_3
+		c.cpu_state = EXECUTION_CYCLE_3
 
 		return err
 
-	case EXECUTE_INSTRUCTION_3:
+	case EXECUTION_CYCLE_3:
 		c.n_lsb, err = c.readByteFromMemory(uint16(c.n_msb)<<8 | uint16(c.n_lsb))
-
-		c.cpu_state = EXECUTE_INSTRUCTION_4
+		c.cpu_state = EXECUTION_CYCLE_4
 
 		return err
 
-	case EXECUTE_INSTRUCTION_4:
+	case EXECUTION_CYCLE_4:
 		c.a = c.n_lsb
 	}
 
