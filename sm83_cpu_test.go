@@ -695,6 +695,205 @@ func Test_LD_ADDR_nn_SP(t *testing.T) {
 	})
 }
 
+// ADD_HL_BC instruction unit tests
+func Test_ADD_HL_BC(t *testing.T) {
+
+	var err error
+
+	t.Run(">>> ADD HL, BC: scenario 1 - increment without carry out in L + C", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_BC_nn,
+			0xb1,
+			0x72,
+			ADD_HL_BC,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0005, 0x0000, FLAG_H, 0x00, 0x72b1, 0x0000, 0x72b1)
+
+		//	six cicles to execute the test program
+		for range 6 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD HL, BC: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(">>> ADD HL, BC: scenario 2 - increment with carry out in L + C", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_BC_nn,
+			0xf1,
+			0x00,
+			ADD_HL_BC,
+			ADD_HL_BC,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0006, 0x0000, 0x00, 0x00, 0x00f1, 0x0000, 0x01e2)
+
+		//	eight cicles to execute the test program
+		for range 8 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD HL, BC: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(">>> ADD HL, BC: scenario 3 - increment with carry out in H + B", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_BC_nn,
+			0x00,
+			0xf1,
+			ADD_HL_BC,
+			ADD_HL_BC,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0006, 0x0000, FLAG_C, 0x00, 0xf100, 0x0000, 0xe200)
+
+		//	eight cicles to execute the test program
+		for range 8 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD HL, BC: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
+// LD_A_ADDR_BC instruction unit tests
+func Test_LD_A_ADDR_BC(t *testing.T) {
+
+	var err error
+
+	t.Run(">>> LD A, (BC): scenario 1 - load acumulator from memory", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_BC_nn,
+			0x05,
+			0x00,
+			LD_A_ADDR_BC,
+			NOP,
+			0x75,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0005, 0x0000, 0x00, 0x75, 0x0005, 0x0000, 0x0000)
+
+		//	six cicles to execute the test program
+		for range 6 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD A, (nn): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
 // LD_SP_nn instruction unit tests
 func Test_LD_SP_nn(t *testing.T) {
 

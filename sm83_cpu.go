@@ -39,6 +39,8 @@ const (
 	LD_B_n        = uint8(0x06)
 	RLCA          = uint8(0x07)
 	LD_ADDR_nn_SP = uint8(0x08)
+	ADD_HL_BC     = uint8(0x09)
+	LD_A_ADDR_BC  = uint8(0x0a)
 
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
@@ -231,6 +233,12 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_ADDR_nn_SP:
 		return c.executeInstruction_LD_ADDR_nn_SP()
+
+	case ADD_HL_BC:
+		return c.executeInstruction_ADD_HL_BC()
+
+	case LD_A_ADDR_BC:
+		return c.executeInstruction_LD_A_ADDR_BC()
 
 	case LD_SP_nn:
 		return c.executeInstruction_LD_SP_nn()
@@ -462,6 +470,86 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_SP() error {
 
 	if c.trace {
 		fmt.Printf("[trace] LD (nn), SP: 0x%04x\n", c.sp)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction ADD_HL_BC
+func (c *SM83_CPU) executeInstruction_ADD_HL_BC() error {
+
+	var result uint16
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		result = uint16(c.hl&0x00ff) + uint16(c.bc&0x00ff)
+		c.n_lsb = uint8(result & 0x00ff)
+
+		if result&0x0010 != 0x0000 {
+			c.flags |= FLAG_H
+		} else {
+			c.flags &= ^FLAG_H
+		}
+		if result&0x0100 != 0x0000 {
+			c.flags |= FLAG_C
+		} else {
+			c.flags &= ^FLAG_C
+		}
+		c.flags &= ^FLAG_N
+
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return nil
+
+	case EXECUTION_CYCLE_2:
+		if c.flags&FLAG_C == 0x00 {
+			result = uint16(c.hl&0xff00)>>8 + uint16(c.bc&0xff00)>>8
+		} else {
+			result = uint16(c.hl&0xff00)>>8 + uint16(c.bc&0xff00)>>8 + 1
+		}
+		c.n_msb = uint8(result & 0x00ff)
+
+		if result&0x0010 != 0x0000 {
+			c.flags |= FLAG_H
+		} else {
+			c.flags &= ^FLAG_H
+		}
+		if result&0x0100 != 0x0000 {
+			c.flags |= FLAG_C
+		} else {
+			c.flags &= ^FLAG_C
+		}
+		c.flags &= ^FLAG_N
+	}
+
+	c.hl = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
+
+	if c.trace {
+		fmt.Printf("[trace] ADD HL, BC: 0x%04x\n", c.hl)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_A_ADDR_BC
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_BC() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.readByteFromMemory(c.bc)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.a = c.n_lsb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD A, (BC): 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
