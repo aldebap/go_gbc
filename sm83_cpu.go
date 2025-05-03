@@ -41,6 +41,11 @@ const (
 	LD_ADDR_nn_SP = uint8(0x08)
 	ADD_HL_BC     = uint8(0x09)
 	LD_A_ADDR_BC  = uint8(0x0a)
+	DEC_BC        = uint8(0x0b)
+	INC_C         = uint8(0x0c)
+	DEC_C         = uint8(0x0d)
+	LD_C_n        = uint8(0x0e)
+	RRCA          = uint8(0x0f)
 
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
@@ -245,6 +250,21 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_A_ADDR_BC:
 		return c.executeInstruction_LD_A_ADDR_BC()
+
+	case DEC_BC:
+		return c.executeInstruction_DEC_BC()
+
+	case INC_C:
+		return c.executeInstruction_INC_C()
+
+	case DEC_C:
+		return c.executeInstruction_DEC_C()
+
+	case LD_C_n:
+		return c.executeInstruction_LD_C_n()
+
+	case RRCA:
+		return c.executeInstruction_RRCA()
 
 	case LD_SP_nn:
 		return c.executeInstruction_LD_SP_nn()
@@ -555,6 +575,118 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_BC() error {
 
 	if c.trace {
 		fmt.Printf("[trace] LD A, (BC): 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction DEC_BC
+func (c *SM83_CPU) executeInstruction_DEC_BC() error {
+
+	var bc = uint16(c.b)<<8 | uint16(c.c)
+
+	bc--
+
+	c.b = uint8((bc & 0xff00) >> 8)
+	c.c = uint8(bc & 0x00ff)
+
+	if bc == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] DEC BC: 0x%02x%02x\n", c.b, c.c)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction INC_C
+func (c *SM83_CPU) executeInstruction_INC_C() error {
+
+	c.c++
+
+	if c.c == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] INC C: 0x%02x\n", c.c)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction DEC_C
+func (c *SM83_CPU) executeInstruction_DEC_C() error {
+
+	c.c--
+
+	if c.c == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] DEC C: 0x%02x\n", c.c)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_C_n
+func (c *SM83_CPU) executeInstruction_LD_C_n() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.c = c.n_msb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD C, n: 0x%02x\n", c.c)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction RLCA
+func (c *SM83_CPU) executeInstruction_RRCA() error {
+
+	if c.a&0x01 == 0x01 {
+		c.a = c.a>>1 | 0x80
+	} else {
+		c.a = c.a >> 1
+	}
+
+	if c.a == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] RRCA: 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
