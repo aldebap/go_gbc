@@ -60,9 +60,12 @@ type SM83_CPU struct {
 
 	a     uint8
 	flags uint8
-	bc    uint16
-	de    uint16
-	hl    uint16
+	b     uint8
+	c     uint8
+	d     uint8
+	e     uint8
+	h     uint8
+	l     uint8
 
 	trace     bool
 	cpu_state uint8
@@ -83,9 +86,12 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 		ie:    0,
 		a:     0,
 		flags: 0,
-		bc:    0,
-		de:    0,
-		hl:    0,
+		b:     0,
+		c:     0,
+		d:     0,
+		e:     0,
+		h:     0,
+		l:     0,
 
 		trace:     trace,
 		cpu_state: FETCHING_INSTRUCTION,
@@ -288,11 +294,12 @@ func (c *SM83_CPU) executeInstruction_LD_BC_nn() error {
 		return err
 
 	case EXECUTION_CYCLE_3:
-		c.bc = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
+		c.b = c.n_msb
+		c.c = c.n_lsb
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD BC, nn: 0x%04x\n", c.bc)
+		fmt.Printf("[trace] LD BC, nn: 0x%02x%02x\n", c.b, c.c)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -305,7 +312,7 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(c.bc, c.a)
+		err = c.writeByteIntoMemory(uint16(c.b)<<8|uint16(c.c), c.a)
 		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
@@ -324,9 +331,14 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
 // execute instruction INC_BC
 func (c *SM83_CPU) executeInstruction_INC_BC() error {
 
-	c.bc++
+	var bc = uint16(c.b)<<8 | uint16(c.c)
 
-	if c.bc == 0x00 {
+	bc++
+
+	c.b = uint8((bc & 0xff00) >> 8)
+	c.c = uint8(bc & 0x00ff)
+
+	if bc == 0x00 {
 		c.flags |= FLAG_Z
 	} else {
 		c.flags &= ^FLAG_Z
@@ -334,7 +346,7 @@ func (c *SM83_CPU) executeInstruction_INC_BC() error {
 	c.flags &= ^FLAG_N
 
 	if c.trace {
-		fmt.Printf("[trace] INC BC: 0x%04x\n", c.bc)
+		fmt.Printf("[trace] INC BC: 0x%02x%02x\n", c.b, c.c)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -344,13 +356,9 @@ func (c *SM83_CPU) executeInstruction_INC_BC() error {
 // execute instruction INC_B
 func (c *SM83_CPU) executeInstruction_INC_B() error {
 
-	msb := uint8((c.bc & 0xff00) >> 8)
-	lsb := uint8(c.bc & 0x00ff)
+	c.b++
 
-	msb++
-	c.bc = uint16(msb)<<8 | uint16(lsb)
-
-	if msb == 0x00 {
+	if c.b == 0x00 {
 		c.flags |= FLAG_Z
 	} else {
 		c.flags &= ^FLAG_Z
@@ -358,7 +366,7 @@ func (c *SM83_CPU) executeInstruction_INC_B() error {
 	c.flags &= ^FLAG_N
 
 	if c.trace {
-		fmt.Printf("[trace] INC B: 0x%02x\n", msb)
+		fmt.Printf("[trace] INC B: 0x%02x\n", c.b)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -368,13 +376,9 @@ func (c *SM83_CPU) executeInstruction_INC_B() error {
 // execute instruction DEC_B
 func (c *SM83_CPU) executeInstruction_DEC_B() error {
 
-	msb := uint8((c.bc & 0xff00) >> 8)
-	lsb := uint8(c.bc & 0x00ff)
+	c.b--
 
-	msb--
-	c.bc = uint16(msb)<<8 | uint16(lsb)
-
-	if msb == 0x00 {
+	if c.b == 0x00 {
 		c.flags |= FLAG_Z
 	} else {
 		c.flags &= ^FLAG_Z
@@ -382,7 +386,7 @@ func (c *SM83_CPU) executeInstruction_DEC_B() error {
 	c.flags &= ^FLAG_N
 
 	if c.trace {
-		fmt.Printf("[trace] DEC B: 0x%02x\n", msb)
+		fmt.Printf("[trace] DEC B: 0x%02x\n", c.b)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -401,11 +405,11 @@ func (c *SM83_CPU) executeInstruction_LD_B_n() error {
 		return err
 
 	case EXECUTION_CYCLE_2:
-		c.bc = uint16(c.n_msb)<<8 | uint16(c.bc&0x00ff)
+		c.b = c.n_msb
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD B, n: 0x%02x\n", c.n_msb)
+		fmt.Printf("[trace] LD B, n: 0x%02x\n", c.b)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -483,7 +487,7 @@ func (c *SM83_CPU) executeInstruction_ADD_HL_BC() error {
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		result = uint16(c.hl&0x00ff) + uint16(c.bc&0x00ff)
+		result = uint16(c.l) + uint16(c.c)
 		c.n_lsb = uint8(result & 0x00ff)
 
 		if result&0x0010 != 0x0000 {
@@ -504,9 +508,9 @@ func (c *SM83_CPU) executeInstruction_ADD_HL_BC() error {
 
 	case EXECUTION_CYCLE_2:
 		if c.flags&FLAG_C == 0x00 {
-			result = uint16(c.hl&0xff00)>>8 + uint16(c.bc&0xff00)>>8
+			result = uint16(c.h) + uint16(c.b)
 		} else {
-			result = uint16(c.hl&0xff00)>>8 + uint16(c.bc&0xff00)>>8 + 1
+			result = uint16(c.h) + uint16(c.b) + 1
 		}
 		c.n_msb = uint8(result & 0x00ff)
 
@@ -523,10 +527,11 @@ func (c *SM83_CPU) executeInstruction_ADD_HL_BC() error {
 		c.flags &= ^FLAG_N
 	}
 
-	c.hl = uint16(c.n_msb)<<8 | uint16(c.n_lsb)
+	c.h = c.n_msb
+	c.l = c.n_lsb
 
 	if c.trace {
-		fmt.Printf("[trace] ADD HL, BC: 0x%04x\n", c.hl)
+		fmt.Printf("[trace] ADD HL, BC: 0x%02x%02x\n", c.h, c.l)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -539,7 +544,7 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_BC() error {
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		c.n_lsb, err = c.readByteFromMemory(c.bc)
+		c.n_lsb, err = c.readByteFromMemory(uint16(c.b)<<8 | uint16(c.c))
 		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
@@ -685,6 +690,6 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_nn() error {
 
 // dump CPU registers
 func (c *SM83_CPU) DumpRegisters() string {
-	return fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-		c.pc, c.sp, c.flags, c.a, c.bc, c.de, c.hl)
+	return fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%02x%02x; DE: 0x%02x%02x; HL: 0x%02x%02x",
+		c.pc, c.sp, c.flags, c.a, c.b, c.c, c.d, c.e, c.h, c.l)
 }
