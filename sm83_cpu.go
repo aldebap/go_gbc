@@ -46,6 +46,8 @@ const (
 	DEC_C         = uint8(0x0d)
 	LD_C_n        = uint8(0x0e)
 	RRCA          = uint8(0x0f)
+	STOP          = uint8(0x10)
+	LD_DE_nn      = uint8(0x11)
 
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
@@ -265,6 +267,12 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case RRCA:
 		return c.executeInstruction_RRCA()
+
+	case STOP:
+		return c.executeInstruction_STOP()
+
+	case LD_DE_nn:
+		return c.executeInstruction_LD_DE_nn()
 
 	case LD_SP_nn:
 		return c.executeInstruction_LD_SP_nn()
@@ -687,6 +695,47 @@ func (c *SM83_CPU) executeInstruction_RRCA() error {
 
 	if c.trace {
 		fmt.Printf("[trace] RRCA: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction STOP
+func (c *SM83_CPU) executeInstruction_STOP() error {
+
+	if c.trace {
+		fmt.Printf("[trace] STOP\n")
+	}
+
+	//	TODO: add a flag to STOP/HALT CPU
+	return nil
+}
+
+// execute instruction LD_DE_nn
+func (c *SM83_CPU) executeInstruction_LD_DE_nn() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		c.d = c.n_msb
+		c.e = c.n_lsb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD DE, nn: 0x%02x%02x\n", c.d, c.e)
 	}
 
 	//	fecth next instruction in the same cycle

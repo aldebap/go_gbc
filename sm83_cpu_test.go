@@ -1066,6 +1066,57 @@ func Test_RRCA(t *testing.T) {
 	})
 }
 
+// LD_DE_nn instruction unit tests
+func Test_LD_DE_nn(t *testing.T) {
+
+	var err error
+
+	t.Run(">>> LD DE, nn: scenario 1 - load DE 16 bits register", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_DE_nn,
+			0x83,
+			0x7f,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0004, 0x0000, 0x00, 0x00, 0x0000, 0x7f83, 0x0000)
+
+		//	four cicles to execute the test program
+		for range 4 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD DE, nn: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
 // LD_ADDR_nn_SP instruction unit tests
 func Test_LD_ADDR_nn_SP(t *testing.T) {
 
