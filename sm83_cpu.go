@@ -46,8 +46,23 @@ const (
 	DEC_C         = uint8(0x0d)
 	LD_C_n        = uint8(0x0e)
 	RRCA          = uint8(0x0f)
-	STOP          = uint8(0x10)
-	LD_DE_nn      = uint8(0x11)
+
+	STOP         = uint8(0x10)
+	LD_DE_nn     = uint8(0x11)
+	LD_ADDR_DE_A = uint8(0x12)
+	INC_DE       = uint8(0x13)
+	INC_D        = uint8(0x14)
+	DEC_D        = uint8(0x15)
+	LD_D_n       = uint8(0x16)
+	RLA          = uint8(0x17)
+	JR_E         = uint8(0x18)
+	ADD_HL_DE    = uint8(0x19)
+	LD_A_ADDR_DE = uint8(0x1a)
+	DEC_DE       = uint8(0x1b)
+	INC_E        = uint8(0x1c)
+	DEC_E        = uint8(0x1d)
+	LD_R_n       = uint8(0x1e)
+	RRA          = uint8(0x1f)
 
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
@@ -273,6 +288,9 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_DE_nn:
 		return c.executeInstruction_LD_DE_nn()
+
+	case LD_ADDR_DE_A:
+		return c.executeInstruction_LD_ADDR_DE_A()
 
 	case LD_SP_nn:
 		return c.executeInstruction_LD_SP_nn()
@@ -736,6 +754,28 @@ func (c *SM83_CPU) executeInstruction_LD_DE_nn() error {
 
 	if c.trace {
 		fmt.Printf("[trace] LD DE, nn: 0x%02x%02x\n", c.d, c.e)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_ADDR_DE_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_DE_A() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		err = c.writeByteIntoMemory(uint16(c.d)<<8|uint16(c.e), c.a)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (DE), A: 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
