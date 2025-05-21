@@ -97,3 +97,86 @@ func (c *SM83_CPU) executeInstruction_INC_DE() error {
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
+
+// execute instruction INC_D
+func (c *SM83_CPU) executeInstruction_INC_D() error {
+
+	c.d++
+
+	if c.d == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] INC D: 0x%02x\n", c.d)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction DEC_D
+func (c *SM83_CPU) executeInstruction_DEC_D() error {
+
+	c.d--
+
+	if c.d == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] DEC D: 0x%02x\n", c.d)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_D_n
+func (c *SM83_CPU) executeInstruction_LD_D_n() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.d = c.n_msb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD D, n: 0x%02x\n", c.d)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction RLA
+func (c *SM83_CPU) executeInstruction_RLA() error {
+
+	c.a = c.a << 1
+
+	if c.a == 0x00 {
+		c.flags |= FLAG_Z
+	} else {
+		c.flags &= ^FLAG_Z
+	}
+	c.flags &= ^FLAG_N
+
+	if c.trace {
+		fmt.Printf("[trace] RLA: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
