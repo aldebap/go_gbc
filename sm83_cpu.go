@@ -307,6 +307,15 @@ func (c *SM83_CPU) executeInstruction() error {
 	case RLA:
 		return c.executeInstruction_RLA()
 
+	case JR_E:
+		return c.executeInstruction_JR_E()
+
+	case ADD_HL_DE:
+		return c.executeInstruction_ADD_HL_DE()
+
+	case LD_A_ADDR_DE:
+		return c.executeInstruction_LD_A_ADDR_DE()
+
 	case LD_SP_nn:
 		return c.executeInstruction_LD_SP_nn()
 

@@ -622,6 +622,110 @@ func Test_RLCA(t *testing.T) {
 	})
 }
 
+// LD_SP_nn instruction unit tests
+func Test_LD_SP_nn(t *testing.T) {
+
+	var err error
+
+	t.Run(">>> LD SP, nn: scenario 1 - load SP 16 bits register", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_SP_nn,
+			0x0c,
+			0x61,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0004, 0x610c, 0x00, 0x00, 0x0000, 0x0000, 0x0000)
+
+		//	four cicles to execute the test program
+		for range 4 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD SP, nn: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
+// LD_A_ADDR_BC instruction unit tests
+func Test_LD_A_ADDR_BC(t *testing.T) {
+
+	var err error
+
+	t.Run(">>> LD A, (BC): scenario 1 - load acumulator from memory", func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_BC_nn,
+			0x05,
+			0x00,
+			LD_A_ADDR_BC,
+			NOP,
+			0x75,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0005, 0x0000, 0x00, 0x75, 0x0005, 0x0000, 0x0000)
+
+		//	six cicles to execute the test program
+		for range 6 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD A, (nn): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
 // DEC_BC instruction unit tests
 func Test_DEC_BC(t *testing.T) {
 
