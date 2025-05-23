@@ -16,7 +16,7 @@ func Test_LD_A_ADDR_nn(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> LD A, (nn): scenario 1 - load acumulator from memory", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD A, (nn) (0x%02x): scenario 1 - load acumulator from memory", LD_A_ADDR_nn), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
