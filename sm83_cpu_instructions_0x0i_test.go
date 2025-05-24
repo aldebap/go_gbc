@@ -785,7 +785,7 @@ func Test_DEC_BC(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> DEC BC: scenario 1 - decrement without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC BC (0x%02x): scenario 1 - decrement without carry out", DEC_BC), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -831,7 +831,7 @@ func Test_DEC_BC(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> DEC BC: scenario 2 - decrement with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC BC (0x%02x): scenario 2 - decrement with carry out", DEC_BC), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -883,7 +883,7 @@ func Test_INC_C(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> INC C: scenario 1 - increment without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC C (0x%02x): scenario 1 - increment without carry out", INC_C), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -929,7 +929,7 @@ func Test_INC_C(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> INC C: scenario 2 - increment with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC C (0x%02x): scenario 2 - increment with carry out", INC_C), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -981,7 +981,7 @@ func Test_DEC_C(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> DEC C: scenario 1 - decrement without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC C (0x%02x): scenario 1 - decrement without carry out", DEC_C), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -1027,7 +1027,7 @@ func Test_DEC_C(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> DEC C: scenario 2 - increment with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC C (0x%02x): scenario 2 - decrement with carry out", DEC_C), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -1079,7 +1079,7 @@ func Test_LD_C_n(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> LD C, n: scenario 1 - load C 8 bits register", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD C, n (0x%02x): scenario 1 - load C 8 bits register", LD_C_n), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -1129,7 +1129,7 @@ func Test_RRCA(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> RRCA: scenario 1 - no circular bit", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> RRCA (0x%02x): scenario 1 - no circular bit", RRCA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -1174,7 +1174,7 @@ func Test_RRCA(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> RRCA: scenario 2 - circular bit", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> RRCA (0x%02x): scenario 2 - circular bit", RRCA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)

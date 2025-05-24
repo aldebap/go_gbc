@@ -11,12 +11,62 @@ import (
 	"testing"
 )
 
+// STOP instruction unit tests
+func Test_STOP(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> STOP (0x%02x): scenario 1 - stop CPU", STOP), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			NOP,
+			STOP,
+			//	TODO: need to create this test scenario
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x0000)
+
+		//	two cicles to execute the test program
+		for range 3 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction NOP: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
 // LD_DE_nn instruction unit tests
 func Test_LD_DE_nn(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> LD DE, nn: scenario 1 - load DE 16 bits register", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD DE, nn (0x%02x): scenario 1 - load DE 16 bits register", LD_DE_nn), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -67,7 +117,7 @@ func Test_LD_ADDR_DE_A(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> LD (DE), A: scenario 1 - write A into (DE)", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD (DE), A (0x%02x): scenario 1 - write A into (DE)", LD_ADDR_DE_A), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -138,7 +188,7 @@ func Test_INC_DE(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> INC DE: scenario 1 - increment without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC DE (0x%02x): scenario 1 - increment without carry out", INC_DE), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -184,7 +234,7 @@ func Test_INC_DE(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> INC DE: scenario 2 - increment with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC DE (0x%02x): scenario 2 - increment with carry out", INC_DE), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -236,7 +286,7 @@ func Test_INC_D(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> INC D: scenario 1 - increment without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC D (0x%02x): scenario 1 - increment without carry out", INC_D), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -282,7 +332,7 @@ func Test_INC_D(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> INC D: scenario 2 - increment with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC D (0x%02x): scenario 2 - increment with carry out", INC_D), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -334,7 +384,7 @@ func Test_DEC_D(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> DEC D: scenario 1 - decrement without carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC D (0x%02x): scenario 1 - decrement without carry out", DEC_D), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -380,7 +430,7 @@ func Test_DEC_D(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> DEC D: scenario 2 - increment with carry out", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC D (0x%02x): scenario 2 - decrement with carry out", DEC_D), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -432,7 +482,7 @@ func Test_LD_D_n(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> LD D, n: scenario 1 - load D 8 bits register", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD D, n (0x%02x): scenario 1 - load D 8 bits register", LD_D_n), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -482,7 +532,7 @@ func Test_RLA(t *testing.T) {
 
 	var err error
 
-	t.Run(">>> RLA: scenario 1 - no overflow", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> RLA (0x%02x): scenario 1 - no overflow", RLA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -527,7 +577,7 @@ func Test_RLA(t *testing.T) {
 		}
 	})
 
-	t.Run(">>> RLA: scenario 2 - overflow", func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> RLA (0x%02x): scenario 2 - overflow", RLA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
