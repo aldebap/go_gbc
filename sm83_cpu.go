@@ -64,6 +64,15 @@ const (
 	LD_E_n       = uint8(0x1e)
 	RRA          = uint8(0x1f)
 
+	JR_NZ_e           = uint8(0x20)
+	LD_HL_nn          = uint8(0x21)
+	LD_ADDR_HL_PLUS_A = uint8(0x22)
+	INC_HL            = uint8(0x23)
+	INC_H             = uint8(0x24)
+	DEC_H             = uint8(0x25)
+	LD_H_n            = uint8(0x26)
+	DDA               = uint8(0x27)
+
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
 	INC_A    = uint8(0x3c)
