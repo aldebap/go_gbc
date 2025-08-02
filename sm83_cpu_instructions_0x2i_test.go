@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
-//	sm83_cpu_test_instructions_0x0i.go - Apr-24-2025 by aldebap
+//	sm83_cpu_test_instructions_0x2i.go - Aug-1-2025 by aldebap
 //
-//	Test cases for Sharp SM83 CPU - instructions 0x10 - 0x1f
+//	Test cases for Sharp SM83 CPU - instructions 0x20 - 0x2f
 ////////////////////////////////////////////////////////////////////////////////
 
 package main
@@ -12,7 +12,7 @@ import (
 )
 
 // STOP instruction unit tests
-func Test_STOP(t *testing.T) {
+func Test_JR_NZ_e(t *testing.T) {
 
 	var err error
 
@@ -61,12 +61,12 @@ func Test_STOP(t *testing.T) {
 	})
 }
 
-// LD_DE_nn instruction unit tests
-func Test_LD_DE_nn(t *testing.T) {
+// LD_HL_nn instruction unit tests
+func Test_LD_HL_nn(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> LD DE, nn (0x%02x): scenario 1 - load DE 16 bits register", LD_DE_nn), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD HL, nn (0x%02x): scenario 1 - load HL 16 bits register", LD_HL_nn), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -80,9 +80,9 @@ func Test_LD_DE_nn(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
-			0x83,
-			0x7f,
+			LD_HL_nn,
+			0x25,
+			0x84,
 			NOP,
 		})
 		if err != nil {
@@ -96,7 +96,7 @@ func Test_LD_DE_nn(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0004, 0x0000, 0x00, 0x00, 0x0000, 0x7f83, 0x0000)
+			0x0004, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x8425)
 
 		//	four cicles to execute the test program
 		for range 4 {
@@ -107,17 +107,17 @@ func Test_LD_DE_nn(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction LD DE, nn: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction LD HL, nn: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// LD_ADDR_DE_A instruction unit tests
-func Test_LD_ADDR_DE_A(t *testing.T) {
+// Test_LD_ADDR_HL_PLUS_A instruction unit tests
+func Test_LD_ADDR_HL_PLUS_A(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> LD (DE), A (0x%02x): scenario 1 - write A into (DE)", LD_ADDR_DE_A), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD (HL+), A (0x%02x): scenario 1 - write A into (HL)", LD_ADDR_HL_PLUS_A), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -131,6 +131,7 @@ func Test_LD_ADDR_DE_A(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
+			//	TODO: need to create this test scenario
 			LD_DE_nn,
 			0x00,
 			0xC0,
@@ -183,12 +184,12 @@ func Test_LD_ADDR_DE_A(t *testing.T) {
 	})
 }
 
-// INC_DE instruction unit tests
-func Test_INC_DE(t *testing.T) {
+// INC_HL instruction unit tests
+func Test_INC_HL(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> INC DE (0x%02x): scenario 1 - increment without carry out", INC_DE), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC HL (0x%02x): scenario 1 - increment without carry out", INC_HL), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -202,10 +203,10 @@ func Test_INC_DE(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0x05,
 			0x21,
-			INC_DE,
+			INC_HL,
 			NOP,
 		})
 		if err != nil {
@@ -219,7 +220,7 @@ func Test_INC_DE(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x2106, 0x0000)
+			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x2106)
 
 		//	five cicles to execute the test program
 		for range 5 {
@@ -230,11 +231,11 @@ func Test_INC_DE(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction INC DE: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction INC HL: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 
-	t.Run(fmt.Sprintf(">>> INC DE (0x%02x): scenario 2 - increment with carry out", INC_DE), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC HL (0x%02x): scenario 2 - increment with carry out", INC_HL), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -248,10 +249,10 @@ func Test_INC_DE(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0xff,
 			0xff,
-			INC_DE,
+			INC_HL,
 			NOP,
 		})
 		if err != nil {
@@ -276,17 +277,17 @@ func Test_INC_DE(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction INC DE: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction INC HL: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// INC_D instruction unit tests
-func Test_INC_D(t *testing.T) {
+// INC_H instruction unit tests
+func Test_INC_H(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> INC D (0x%02x): scenario 1 - increment without carry out", INC_D), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC H (0x%02x): scenario 1 - increment without carry out", INC_H), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -300,10 +301,10 @@ func Test_INC_D(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0xf1,
 			0x40,
-			INC_D,
+			INC_H,
 			NOP,
 		})
 		if err != nil {
@@ -317,7 +318,7 @@ func Test_INC_D(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x41f1, 0x0000)
+			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x41f1)
 
 		//	five cicles to execute the test program
 		for range 5 {
@@ -328,11 +329,11 @@ func Test_INC_D(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction INC D: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction INC H: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 
-	t.Run(fmt.Sprintf(">>> INC D (0x%02x): scenario 2 - increment with carry out", INC_D), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> INC H (0x%02x): scenario 2 - increment with carry out", INC_H), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -346,10 +347,10 @@ func Test_INC_D(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0x44,
 			0xff,
-			INC_D,
+			INC_H,
 			NOP,
 		})
 		if err != nil {
@@ -363,7 +364,7 @@ func Test_INC_D(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0005, 0x0000, FLAG_Z, 0x00, 0x0000, 0x0044, 0x0000)
+			0x0005, 0x0000, FLAG_Z, 0x00, 0x0000, 0x0000, 0x0044)
 
 		//	five cicles to execute the test program
 		for range 5 {
@@ -374,17 +375,17 @@ func Test_INC_D(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction INC D: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction INC H: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// DEC_D instruction unit tests
-func Test_DEC_D(t *testing.T) {
+// DEC_H instruction unit tests
+func Test_DEC_H(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> DEC D (0x%02x): scenario 1 - decrement without carry out", DEC_D), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC H (0x%02x): scenario 1 - decrement without carry out", DEC_H), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -398,10 +399,10 @@ func Test_DEC_D(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0xf1,
 			0x40,
-			DEC_D,
+			DEC_H,
 			NOP,
 		})
 		if err != nil {
@@ -415,7 +416,7 @@ func Test_DEC_D(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x3ff1, 0x0000)
+			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x3ff1)
 
 		//	five cicles to execute the test program
 		for range 5 {
@@ -426,11 +427,11 @@ func Test_DEC_D(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction DEC D: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction DEC H: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 
-	t.Run(fmt.Sprintf(">>> DEC D (0x%02x): scenario 2 - decrement with carry out", DEC_D), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DEC H (0x%02x): scenario 2 - decrement with carry out", DEC_H), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -444,10 +445,10 @@ func Test_DEC_D(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_DE_nn,
+			LD_HL_nn,
 			0xf1,
 			0x00,
-			DEC_D,
+			DEC_H,
 			NOP,
 		})
 		if err != nil {
@@ -461,7 +462,7 @@ func Test_DEC_D(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0xfff1, 0x0000)
+			0x0005, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0xfff1)
 
 		//	five cicles to execute the test program
 		for range 5 {
@@ -472,17 +473,17 @@ func Test_DEC_D(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction DEC D: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction DEC H: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// LD_D_n instruction unit tests
-func Test_LD_D_n(t *testing.T) {
+// LD_H_n instruction unit tests
+func Test_LD_H_n(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> LD D, n (0x%02x): scenario 1 - load D 8 bits register", LD_D_n), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> LD H, n (0x%02x): scenario 1 - load H 8 bits register", LD_H_n), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -496,8 +497,8 @@ func Test_LD_D_n(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_D_n,
-			0x49,
+			LD_H_n,
+			0x74,
 			NOP,
 		})
 		if err != nil {
@@ -511,7 +512,7 @@ func Test_LD_D_n(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0003, 0x0000, 0x00, 0x00, 0x0000, 0x4900, 0x0000)
+			0x0003, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x7400)
 
 		//	three cicles to execute the test program
 		for range 3 {
@@ -522,17 +523,17 @@ func Test_LD_D_n(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction LD D, n: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction LD H, n: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// RLA instruction unit tests
-func Test_RLA(t *testing.T) {
+// DAA instruction unit tests
+func Test_DAA(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> RLA (0x%02x): scenario 1 - no overflow", RLA), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DAA (0x%02x): scenario 1 - no overflow", DAA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -546,9 +547,10 @@ func Test_RLA(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
+			//	TODO: need to create this test scenario
 			LD_A_n,
 			0x40,
-			RLA,
+			DAA,
 			NOP,
 		})
 		if err != nil {
@@ -573,11 +575,11 @@ func Test_RLA(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction RLA: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction DAA: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 
-	t.Run(fmt.Sprintf(">>> RLA (0x%02x): scenario 2 - overflow", RLA), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> DAA (0x%02x): scenario 2 - overflow", DAA), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -591,9 +593,10 @@ func Test_RLA(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
+			//	TODO: need to create this test scenario
 			LD_A_n,
 			0xc0,
-			RLA,
+			DAA,
 			NOP,
 		})
 		if err != nil {
@@ -618,16 +621,7 @@ func Test_RLA(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction RLA: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction DAA: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
-
-//	TODO: implement JR_E instruction unit tests
-//	TODO: implement ADD_HL_DE instruction unit tests
-//	TODO: implement LD_A_ADDR_DE instruction unit tests
-//	TODO: implement DEC_DE instruction unit tests
-//	TODO: implement INC_E instruction unit tests
-//	TODO: implement DEC_E instruction unit tests
-//	TODO: implement LD_E_n instruction unit tests
-//	TODO: implement RRA instruction unit tests

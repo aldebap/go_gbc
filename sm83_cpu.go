@@ -71,7 +71,7 @@ const (
 	INC_H             = uint8(0x24)
 	DEC_H             = uint8(0x25)
 	LD_H_n            = uint8(0x26)
-	DDA               = uint8(0x27)
+	DAA               = uint8(0x27)
 
 	JR_NC_e  = uint8(0x30)
 	LD_SP_nn = uint8(0x31)
@@ -315,6 +315,32 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case RLA:
 		return c.executeInstruction_RLA()
+
+	//	TODO: missing instructions here
+
+	case JR_NZ_e:
+		return c.executeInstruction_JR_NZ_e()
+
+	case LD_HL_nn:
+		return c.executeInstruction_LD_HL_nn()
+
+	case LD_ADDR_HL_PLUS_A:
+		return c.executeInstruction_LD_ADDR_HL_PLUS_A()
+
+	case INC_HL:
+		return c.executeInstruction_INC_HL()
+
+	case INC_H:
+		return c.executeInstruction_INC_H()
+
+	case DEC_H:
+		return c.executeInstruction_DEC_H()
+
+	case LD_H_n:
+		return c.executeInstruction_LD_H_n()
+
+	case DAA:
+		return c.executeInstruction_DAA()
 
 	case JR_E:
 		return c.executeInstruction_JR_E()
