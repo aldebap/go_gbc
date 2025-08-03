@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
-//	sm83_cpu_instructions_0x1i.go - Apr-23-2025 by aldebap
+//	sm83_cpu_instructions_0x2i.go - Apr-23-2025 by aldebap
 //
-//	Emulator for Sharp SM83 CPU - instructions 0x10 - 0x1f
+//	Emulator for Sharp SM83 CPU - instructions 0x20 - 0x2f
 ////////////////////////////////////////////////////////////////////////////////
 
 package main
@@ -30,36 +30,6 @@ func (c *SM83_CPU) executeInstruction_JR_NZ_e() error {
 
 	if c.trace {
 		fmt.Printf("[trace] JR_NZ_e\n")
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction LD_HL_nn
-func (c *SM83_CPU) executeInstruction_LD_HL_nn() error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		c.n_lsb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-		c.n_msb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_3
-
-		return err
-
-	case EXECUTION_CYCLE_3:
-		c.h = c.n_msb
-		c.l = c.n_lsb
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD HL, nn: 0x%02x%02x\n", c.h, c.l)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -178,18 +148,46 @@ func (c *SM83_CPU) executeInstruction_LD_H_n() error {
 
 // execute instruction DAA
 func (c *SM83_CPU) executeInstruction_DAA() error {
-	var err error
+
+	/*
+		DAA: function() {
+			var a=Z80._r.a;
+			if((Z80._r.f&0x20)||((Z80._r.a&15)>9))
+				Z80._r.a+=6;
+			Z80._r.f&=0xEF;
+			if((Z80._r.f&0x20)||(a>0x99)) {
+				Z80._r.a+=0x60;
+				Z80._r.f|=0x10;
+			}
+			Z80._r.m=1;
+		},
+	*/
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-	case EXECUTION_CYCLE_2:
-	case EXECUTION_CYCLE_3:
+		if c.flags&FLAG_H != 0 || c.a&0x0F > 0x09 {
+			c.a += 0x06
+		}
 		c.cpu_state = EXECUTION_CYCLE_2
 
-		return err
+		return nil
+
+	case EXECUTION_CYCLE_2:
+		c.flags &= ^FLAG_N
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return nil
+
+	case EXECUTION_CYCLE_3:
+		if c.flags&FLAG_H != 0 || c.a > 0x99 {
+			c.a += 0x60
+			c.flags |= FLAG_C
+		}
+		c.cpu_state = EXECUTION_CYCLE_4
+
+		return nil
 
 	case EXECUTION_CYCLE_4:
-		c.a = c.n_msb
 	}
 
 	if c.trace {

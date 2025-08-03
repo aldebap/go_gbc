@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
-//	sm83_cpu_instructions_0x0i.go - Apr-23-2025 by aldebap
+//	sm83_cpu_instructions.go - Aug-3-2025 by aldebap
 //
-//	Emulator for Sharp SM83 CPU - instructions 0x00 - 0x0f
+//	Emulator for Sharp SM83 CPU - generic instructions
 ////////////////////////////////////////////////////////////////////////////////
 
 package main
@@ -10,17 +10,37 @@ import (
 	"fmt"
 )
 
-// execute instruction NOP
-func (c *SM83_CPU) executeInstruction_NOP() error {
+// execute instruction LD_XX_nn
+func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg string) error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		*msr = c.n_msb
+		*lsr = c.n_lsb
+	}
 
 	if c.trace {
-		fmt.Printf("[trace] NOP\n")
+		fmt.Printf("[trace] LD %s, nn: 0x%02x%02x\n", reg, *msr, *lsr)
 	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
 
+/*
 // execute instruction LD_ADDR_BC_A
 func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
 	var err error
@@ -125,30 +145,6 @@ func (c *SM83_CPU) executeInstruction_LD_B_n() error {
 
 	if c.trace {
 		fmt.Printf("[trace] LD B, n: 0x%02x\n", c.b)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction RLCA
-func (c *SM83_CPU) executeInstruction_RLCA() error {
-
-	if c.a&0x80 == 0x80 {
-		c.a = c.a<<1 | 0x01
-	} else {
-		c.a = c.a << 1
-	}
-
-	if c.a == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] RLCA: 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -300,90 +296,4 @@ func (c *SM83_CPU) executeInstruction_DEC_BC() error {
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
-
-// execute instruction INC_C
-func (c *SM83_CPU) executeInstruction_INC_C() error {
-
-	c.c++
-
-	if c.c == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] INC C: 0x%02x\n", c.c)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction DEC_C
-func (c *SM83_CPU) executeInstruction_DEC_C() error {
-
-	c.c--
-
-	if c.c == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] DEC C: 0x%02x\n", c.c)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction LD_C_n
-func (c *SM83_CPU) executeInstruction_LD_C_n() error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		c.n_msb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-		c.c = c.n_msb
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD C, n: 0x%02x\n", c.c)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction RLCA
-func (c *SM83_CPU) executeInstruction_RRCA() error {
-
-	if c.a&0x01 == 0x01 {
-		c.a = c.a>>1 | 0x80
-	} else {
-		c.a = c.a >> 1
-	}
-
-	if c.a == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] RRCA: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
+*/

@@ -21,36 +21,6 @@ func (c *SM83_CPU) executeInstruction_STOP() error {
 	return nil
 }
 
-// execute instruction LD_DE_nn
-func (c *SM83_CPU) executeInstruction_LD_DE_nn() error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		c.n_lsb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-		c.n_msb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_3
-
-		return err
-
-	case EXECUTION_CYCLE_3:
-		c.d = c.n_msb
-		c.e = c.n_lsb
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD DE, nn: 0x%02x%02x\n", c.d, c.e)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction LD_ADDR_DE_A
 func (c *SM83_CPU) executeInstruction_LD_ADDR_DE_A() error {
 	var err error

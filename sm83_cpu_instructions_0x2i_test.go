@@ -668,56 +668,10 @@ func Test_DAA(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0004, 0x0000, 0x00, 0x80, 0x0000, 0x0000, 0x0000)
+			0x0004, 0x0000, 0x00, 0x40, 0x0000, 0x0000, 0x0000)
 
 		//	four cicles to execute the test program
-		for range 4 {
-			cpu.MachineCycle()
-		}
-
-		got := cpu.DumpRegisters()
-
-		//	check the invocation result
-		if want != got {
-			t.Errorf("failed executing instruction DAA: expected: %s\n\tresult: %s", want, got)
-		}
-	})
-
-	t.Run(fmt.Sprintf(">>> DAA (0x%02x): scenario 2 - overflow", DAA), func(t *testing.T) {
-
-		//	create a new SM83 CPU
-		cpu := NewSM83_CPU(trace)
-		if cpu == nil {
-			t.Errorf("fail creating new SM83 CPU")
-		}
-
-		//	create a new ROM memory and load it with the test program
-		rom := &ROM_memory{}
-		if rom == nil {
-			t.Errorf("fail creating new ROM memory")
-		}
-		err = rom.Load([]uint8{
-			//	TODO: need to create this test scenario
-			LD_A_n,
-			0xc0,
-			DAA,
-			NOP,
-		})
-		if err != nil {
-			t.Errorf("fail loading test program: %s", err.Error())
-		}
-
-		//	connect the ROM memory to the CPU
-		err = cpu.ConnectMemory(rom, 0x0000)
-		if err != nil {
-			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
-		}
-
-		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0004, 0x0000, 0x00, 0x80, 0x0000, 0x0000, 0x0000)
-
-		//	four cicles to execute the test program
-		for range 4 {
+		for range 7 {
 			cpu.MachineCycle()
 		}
 

@@ -248,7 +248,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_NOP()
 
 	case LD_BC_nn:
-		return c.executeInstruction_LD_BC_nn()
+		return c.executeInstruction_LD_XX_nn(&c.b, &c.c, "BC")
 
 	case LD_ADDR_BC_A:
 		return c.executeInstruction_LD_ADDR_BC_A()
@@ -296,7 +296,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_STOP()
 
 	case LD_DE_nn:
-		return c.executeInstruction_LD_DE_nn()
+		return c.executeInstruction_LD_XX_nn(&c.d, &c.e, "DE")
 
 	case LD_ADDR_DE_A:
 		return c.executeInstruction_LD_ADDR_DE_A()
@@ -322,7 +322,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_JR_NZ_e()
 
 	case LD_HL_nn:
-		return c.executeInstruction_LD_HL_nn()
+		return c.executeInstruction_LD_XX_nn(&c.h, &c.l, "HL")
 
 	case LD_ADDR_HL_PLUS_A:
 		return c.executeInstruction_LD_ADDR_HL_PLUS_A()
