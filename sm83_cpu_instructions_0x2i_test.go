@@ -16,7 +16,7 @@ func Test_JR_NZ_e(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> STOP (0x%02x): scenario 1 - stop CPU", STOP), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> JR_NZ_e (0x%02x): scenario 1 - no jump (Z is 1)", JR_NZ_e), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -30,9 +30,13 @@ func Test_JR_NZ_e(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
+			LD_B_n,
+			0xFF,
+			INC_B,
+			JR_NZ_e,
+			0x05,
 			NOP,
-			STOP,
-			//	TODO: need to create this test scenario
+			NOP,
 		})
 		if err != nil {
 			t.Errorf("fail loading test program: %s", err.Error())
@@ -45,10 +49,10 @@ func Test_JR_NZ_e(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0002, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x0000)
+			0x0006, 0x0000, FLAG_Z, 0x00, 0x0000, 0x0000, 0x0000)
 
 		//	two cicles to execute the test program
-		for range 3 {
+		for range 6 {
 			cpu.MachineCycle()
 		}
 
@@ -56,7 +60,107 @@ func Test_JR_NZ_e(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction NOP: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction JR_NZ_e: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> JR_NZ_e (0x%02x): scenario 2 - jump forward", JR_NZ_e), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_B_n,
+			0xFE,
+			INC_B,
+			JR_NZ_e,
+			0x05,
+			NOP,
+			NOP,
+			NOP,
+			NOP,
+			NOP,
+			NOP,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x000B, 0x0000, 0x00, 0x00, 0xFF00, 0x0000, 0x0000)
+
+		//	two cicles to execute the test program
+		for range 6 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction JR_NZ_e: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> JR_NZ_e (0x%02x): scenario 3 - jump backwards", JR_NZ_e), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_B_n,
+			0xFE,
+			INC_B,
+			JR_NZ_e,
+			0xFB, // 0xFB = -5
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0001, 0x0000, 0x00, 0x00, 0xFF00, 0x0000, 0x0000)
+
+		//	two cicles to execute the test program
+		for range 6 {
+			cpu.MachineCycle()
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction JR_NZ_e: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }

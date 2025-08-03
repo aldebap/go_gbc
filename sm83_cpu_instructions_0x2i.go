@@ -23,7 +23,9 @@ func (c *SM83_CPU) executeInstruction_JR_NZ_e() error {
 		return err
 
 	case EXECUTION_CYCLE_2:
-		c.pc += uint16(c.n_msb)
+		if c.flags&FLAG_Z == 0 {
+			c.pc += uint16(int8(c.n_msb))
+		}
 	}
 
 	if c.trace {
@@ -176,15 +178,19 @@ func (c *SM83_CPU) executeInstruction_LD_H_n() error {
 
 // execute instruction DAA
 func (c *SM83_CPU) executeInstruction_DAA() error {
+	var err error
 
-	c.a = c.a << 1
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+	case EXECUTION_CYCLE_2:
+	case EXECUTION_CYCLE_3:
+		c.cpu_state = EXECUTION_CYCLE_2
 
-	if c.a == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
+		return err
+
+	case EXECUTION_CYCLE_4:
+		c.a = c.n_msb
 	}
-	c.flags &= ^FLAG_N
 
 	if c.trace {
 		fmt.Printf("[trace] DAA: 0x%02x\n", c.a)
