@@ -85,7 +85,6 @@ const (
 // SM83 CPU internal registers and connections
 type SM83_CPU struct {
 	pc uint16
-	sp uint16
 	ir uint8
 	ie uint8
 
@@ -97,6 +96,8 @@ type SM83_CPU struct {
 	e     uint8
 	h     uint8
 	l     uint8
+	s     uint8
+	p     uint8
 
 	trace     bool
 	cpu_state uint8
@@ -112,7 +113,6 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 
 	return &SM83_CPU{
 		pc:    0,
-		sp:    0,
 		ir:    0,
 		ie:    0,
 		a:     0,
@@ -123,6 +123,8 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 		e:     0,
 		h:     0,
 		l:     0,
+		s:     0,
+		p:     0,
 
 		trace:     trace,
 		cpu_state: FETCHING_INSTRUCTION,
@@ -251,7 +253,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_XX_nn(&c.b, &c.c, "BC")
 
 	case LD_ADDR_BC_A:
-		return c.executeInstruction_LD_ADDR_BC_A()
+		return c.executeInstruction_LD_ADDR_XX_Y(c.b, c.c, "BC", c.a, "A")
 
 	case INC_BC:
 		return c.executeInstruction_INC_BC()
@@ -299,7 +301,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_XX_nn(&c.d, &c.e, "DE")
 
 	case LD_ADDR_DE_A:
-		return c.executeInstruction_LD_ADDR_DE_A()
+		return c.executeInstruction_LD_ADDR_XX_Y(c.d, c.e, "DE", c.a, "A")
 
 	case INC_DE:
 		return c.executeInstruction_INC_DE()
@@ -352,7 +354,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_A_ADDR_DE()
 
 	case LD_SP_nn:
-		return c.executeInstruction_LD_SP_nn()
+		return c.executeInstruction_LD_XX_nn(&c.s, &c.p, "SP")
 
 	case INC_A:
 		return c.executeInstruction_INC_A()
@@ -372,6 +374,6 @@ func (c *SM83_CPU) executeInstruction() error {
 
 // dump CPU registers
 func (c *SM83_CPU) DumpRegisters() string {
-	return fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%02x%02x; DE: 0x%02x%02x; HL: 0x%02x%02x",
-		c.pc, c.sp, c.flags, c.a, c.b, c.c, c.d, c.e, c.h, c.l)
+	return fmt.Sprintf("PC: 0x%04x; SP: 0x%02x%02x; Flags: 0x%02x; A: 0x%02x; BC: 0x%02x%02x; DE: 0x%02x%02x; HL: 0x%02x%02x",
+		c.pc, c.s, c.p, c.flags, c.a, c.b, c.c, c.d, c.e, c.h, c.l)
 }

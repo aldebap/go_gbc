@@ -40,14 +40,13 @@ func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg strin
 	return c.fetchInstruction()
 }
 
-/*
-// execute instruction LD_ADDR_BC_A
-func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
+// execute instruction LD_ADDR_XX_Y
+func (c *SM83_CPU) executeInstruction_LD_ADDR_XX_Y(msr uint8, lsr uint8, reg string, vr uint8, vreg string) error {
 	var err error
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.b)<<8|uint16(c.c), c.a)
+		err = c.writeByteIntoMemory(uint16(msr)<<8|uint16(lsr), vr)
 		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
@@ -56,13 +55,14 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD (BC), A: 0x%02x\n", c.a)
+		fmt.Printf("[trace] LD (%s), %s: 0x%02x\n", reg, vreg, vr)
 	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
 
+/*
 // execute instruction INC_BC
 func (c *SM83_CPU) executeInstruction_INC_BC() error {
 

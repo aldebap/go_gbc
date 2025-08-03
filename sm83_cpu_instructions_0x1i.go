@@ -21,28 +21,6 @@ func (c *SM83_CPU) executeInstruction_STOP() error {
 	return nil
 }
 
-// execute instruction LD_ADDR_DE_A
-func (c *SM83_CPU) executeInstruction_LD_ADDR_DE_A() error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.d)<<8|uint16(c.e), c.a)
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD (DE), A: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction INC_DE
 func (c *SM83_CPU) executeInstruction_INC_DE() error {
 

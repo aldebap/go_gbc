@@ -21,28 +21,6 @@ func (c *SM83_CPU) executeInstruction_NOP() error {
 	return c.fetchInstruction()
 }
 
-// execute instruction LD_ADDR_BC_A
-func (c *SM83_CPU) executeInstruction_LD_ADDR_BC_A() error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.b)<<8|uint16(c.c), c.a)
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD (BC), A: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction INC_BC
 func (c *SM83_CPU) executeInstruction_INC_BC() error {
 
@@ -173,13 +151,13 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_SP() error {
 		return err
 
 	case EXECUTION_CYCLE_3:
-		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), uint8(c.sp&0x00ff))
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), c.p)
 		c.cpu_state = EXECUTION_CYCLE_4
 
 		return err
 
 	case EXECUTION_CYCLE_4:
-		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb)+1, uint8((c.sp&0xff00)>>8))
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb)+1, c.s)
 		c.cpu_state = EXECUTION_CYCLE_5
 
 		return err
@@ -188,7 +166,7 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_SP() error {
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD (nn), SP: 0x%04x\n", c.sp)
+		fmt.Printf("[trace] LD (nn), SP: 0x%02x%02x\n", c.s, c.p)
 	}
 
 	//	fecth next instruction in the same cycle
