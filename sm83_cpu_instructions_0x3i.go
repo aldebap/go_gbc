@@ -10,48 +10,9 @@ import (
 	"fmt"
 )
 
-// execute instruction INC_A
-func (c *SM83_CPU) executeInstruction_INC_A() error {
+// execute instruction JR_NC_e
+func (c *SM83_CPU) executeInstruction_JR_NC_e() error {
 
-	c.a++
-
-	if c.a == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] INC A: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction DEC_A
-func (c *SM83_CPU) executeInstruction_DEC_A() error {
-
-	c.a--
-
-	if c.a == 0x00 {
-		c.flags |= FLAG_Z
-	} else {
-		c.flags &= ^FLAG_Z
-	}
-	c.flags &= ^FLAG_N
-
-	if c.trace {
-		fmt.Printf("[trace] DEC A: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction LD_A_n
-func (c *SM83_CPU) executeInstruction_LD_A_n() error {
 	var err error
 
 	switch c.cpu_state {
@@ -62,11 +23,13 @@ func (c *SM83_CPU) executeInstruction_LD_A_n() error {
 		return err
 
 	case EXECUTION_CYCLE_2:
-		c.a = c.n_msb
+		if c.flags&FLAG_C == 0 {
+			c.pc += uint16(int8(c.n_msb))
+		}
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD A, n: 0x%02x\n", c.a)
+		fmt.Printf("[trace] JR_NC_e\n")
 	}
 
 	//	fecth next instruction in the same cycle

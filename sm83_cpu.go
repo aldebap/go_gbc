@@ -72,24 +72,32 @@ const (
 	DEC_H             = uint8(0x25)
 	LD_H_n            = uint8(0x26)
 	DAA               = uint8(0x27)
+	JR_Z_e            = uint8(0x28)
+	ADD_HL_HL         = uint8(0x29)
+	LD_A_ADDR_HL_PLUS = uint8(0x2a)
+	DEC_HL            = uint8(0x2b)
+	INC_L             = uint8(0x2c)
+	DEC_L             = uint8(0x2d)
+	LD_L_n            = uint8(0x2e)
+	CPL               = uint8(0x2f)
 
-	JR_NC_e  = uint8(0x30)
-	LD_SP_nn = uint8(0x31)
-	INC_A    = uint8(0x3c)
-	DEC_A    = uint8(0x3d)
-	LD_A_n   = uint8(0x3e)
+	JR_NC_e            = uint8(0x30)
+	LD_SP_nn           = uint8(0x31)
+	LD_ADDR_HL_MINUS_A = uint8(0x32)
+	INC_SP             = uint8(0x33)
+	INC_A              = uint8(0x3c)
+	DEC_A              = uint8(0x3d)
+	LD_A_n             = uint8(0x3e)
 
 	LD_A_ADDR_nn = uint8(0xfa)
 )
 
 // SM83 CPU internal registers and connections
 type SM83_CPU struct {
-	pc uint16
-	ir uint8
-	ie uint8
-
+	pc    uint16
+	ir    uint8
+	ie    uint8
 	a     uint8
-	flags uint8
 	b     uint8
 	c     uint8
 	d     uint8
@@ -98,6 +106,7 @@ type SM83_CPU struct {
 	l     uint8
 	s     uint8
 	p     uint8
+	flags uint8
 
 	trace     bool
 	cpu_state uint8
@@ -116,7 +125,6 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 		ir:    0,
 		ie:    0,
 		a:     0,
-		flags: 0,
 		b:     0,
 		c:     0,
 		d:     0,
@@ -125,6 +133,7 @@ func NewSM83_CPU(trace bool) *SM83_CPU {
 		l:     0,
 		s:     0,
 		p:     0,
+		flags: 0,
 
 		trace:     trace,
 		cpu_state: FETCHING_INSTRUCTION,
@@ -256,16 +265,16 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_ADDR_XX_Y(c.b, c.c, "BC", c.a, "A")
 
 	case INC_BC:
-		return c.executeInstruction_INC_BC()
+		return c.executeInstruction_INC_XX(&c.b, &c.c, "BC")
 
 	case INC_B:
-		return c.executeInstruction_INC_B()
+		return c.executeInstruction_INC_X(&c.b, "B")
 
 	case DEC_B:
-		return c.executeInstruction_DEC_B()
+		return c.executeInstruction_DEC_X(&c.b, "B")
 
 	case LD_B_n:
-		return c.executeInstruction_LD_B_n()
+		return c.executeInstruction_LD_X_n(&c.b, "B")
 
 	case RLCA:
 		return c.executeInstruction_RLCA()
@@ -280,16 +289,16 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_A_ADDR_BC()
 
 	case DEC_BC:
-		return c.executeInstruction_DEC_BC()
+		return c.executeInstruction_DEC_XX(&c.b, &c.c, "BC")
 
 	case INC_C:
-		return c.executeInstruction_INC_C()
+		return c.executeInstruction_INC_X(&c.c, "C")
 
 	case DEC_C:
-		return c.executeInstruction_DEC_C()
+		return c.executeInstruction_DEC_X(&c.c, "C")
 
 	case LD_C_n:
-		return c.executeInstruction_LD_C_n()
+		return c.executeInstruction_LD_X_n(&c.c, "C")
 
 	case RRCA:
 		return c.executeInstruction_RRCA()
@@ -304,21 +313,43 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_ADDR_XX_Y(c.d, c.e, "DE", c.a, "A")
 
 	case INC_DE:
-		return c.executeInstruction_INC_DE()
+		return c.executeInstruction_INC_XX(&c.d, &c.e, "DE")
 
 	case INC_D:
-		return c.executeInstruction_INC_D()
+		return c.executeInstruction_INC_X(&c.d, "D")
 
 	case DEC_D:
-		return c.executeInstruction_DEC_D()
+		return c.executeInstruction_DEC_X(&c.d, "D")
 
 	case LD_D_n:
-		return c.executeInstruction_LD_D_n()
+		return c.executeInstruction_LD_X_n(&c.d, "D")
 
 	case RLA:
 		return c.executeInstruction_RLA()
 
-	//	TODO: missing instructions here
+	case JR_E:
+		return c.executeInstruction_JR_E()
+
+	case ADD_HL_DE:
+		return c.executeInstruction_ADD_HL_DE()
+
+	case LD_A_ADDR_DE:
+		return c.executeInstruction_LD_A_ADDR_DE()
+
+	case DEC_DE:
+		return c.executeInstruction_DEC_XX(&c.d, &c.e, "DE")
+
+	case INC_E:
+		return c.executeInstruction_INC_X(&c.e, "E")
+
+	case DEC_E:
+		return c.executeInstruction_DEC_X(&c.e, "E")
+
+	case LD_E_n:
+		return c.executeInstruction_LD_X_n(&c.e, "E")
+
+	case RRA:
+		return c.executeInstruction_RRA()
 
 	case JR_NZ_e:
 		return c.executeInstruction_JR_NZ_e()
@@ -330,40 +361,64 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_ADDR_HL_PLUS_A()
 
 	case INC_HL:
-		return c.executeInstruction_INC_HL()
+		return c.executeInstruction_INC_XX(&c.h, &c.l, "HL")
 
 	case INC_H:
-		return c.executeInstruction_INC_H()
+		return c.executeInstruction_INC_X(&c.h, "H")
 
 	case DEC_H:
-		return c.executeInstruction_DEC_H()
+		return c.executeInstruction_DEC_X(&c.h, "H")
 
 	case LD_H_n:
-		return c.executeInstruction_LD_H_n()
+		return c.executeInstruction_LD_X_n(&c.h, "H")
 
 	case DAA:
 		return c.executeInstruction_DAA()
 
-	case JR_E:
-		return c.executeInstruction_JR_E()
+	case JR_Z_e:
+		return nil // TODO: implement JR_Z_e
 
-	case ADD_HL_DE:
-		return c.executeInstruction_ADD_HL_DE()
+	case ADD_HL_HL:
+		return nil // TODO: implement ADD_HL_HL
 
-	case LD_A_ADDR_DE:
-		return c.executeInstruction_LD_A_ADDR_DE()
+	case LD_A_ADDR_HL_PLUS:
+		return nil // TODO: implement LD_A_ADDR_HL_PLUS
+
+	case DEC_HL:
+		return c.executeInstruction_DEC_XX(&c.h, &c.l, "HL")
+
+	case INC_L:
+		return c.executeInstruction_INC_X(&c.l, "L")
+
+	case DEC_L:
+		return c.executeInstruction_DEC_X(&c.l, "L")
+
+	case LD_L_n:
+		return c.executeInstruction_LD_X_n(&c.l, "L")
+
+	case CPL:
+		return nil // TODO: implement CPL
+
+	case JR_NC_e:
+		return c.executeInstruction_JR_NC_e()
 
 	case LD_SP_nn:
 		return c.executeInstruction_LD_XX_nn(&c.s, &c.p, "SP")
 
+	case LD_ADDR_HL_MINUS_A:
+		return nil // TODO: implement LD_ADDR_HL_MINUS_A
+
+	case INC_SP:
+		return c.executeInstruction_INC_XX(&c.s, &c.p, "SP")
+
 	case INC_A:
-		return c.executeInstruction_INC_A()
+		return c.executeInstruction_INC_X(&c.a, "A")
 
 	case DEC_A:
-		return c.executeInstruction_DEC_A()
+		return c.executeInstruction_DEC_X(&c.a, "A")
 
 	case LD_A_n:
-		return c.executeInstruction_LD_A_n()
+		return c.executeInstruction_LD_X_n(&c.a, "A")
 
 	case LD_A_ADDR_nn:
 		return c.executeInstruction_LD_A_ADDR_nn()
