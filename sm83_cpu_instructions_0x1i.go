@@ -41,8 +41,8 @@ func (c *SM83_CPU) executeInstruction_RLA() error {
 	return c.fetchInstruction()
 }
 
-// execute instruction JR_E
-func (c *SM83_CPU) executeInstruction_JR_E() error {
+// execute instruction JR_e
+func (c *SM83_CPU) executeInstruction_JR_e() error {
 	var err error
 
 	switch c.cpu_state {
@@ -57,7 +57,7 @@ func (c *SM83_CPU) executeInstruction_JR_E() error {
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] JR_E: 0x%02x\n", c.n_msb)
+		fmt.Printf("[trace] JR_e: 0x%02x\n", c.n_msb)
 	}
 
 	//	fecth next instruction in the same cycle

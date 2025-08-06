@@ -345,7 +345,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_RLA()
 
 	case JR_E:
-		return c.executeInstruction_JR_E()
+		return c.executeInstruction_JR_e()
 
 	case ADD_HL_DE:
 		return c.executeInstruction_ADD_HL_XX(c.d, c.e, REG_DE)

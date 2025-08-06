@@ -32,3 +32,8 @@ TARGET=unit-test
 PACKAGE_TARGET=github.com/aldebap/go_gbc
 
 unitTestTarget
+
+TARGET=unit-test
+PACKAGE_TARGET=github.com/aldebap/go_gbc/test
+
+#unitTestTarget
