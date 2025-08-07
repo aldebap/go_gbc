@@ -4,7 +4,7 @@
 //	Test cases for Sharp SM83 CPU - instructions 0x10 - 0x1f
 ////////////////////////////////////////////////////////////////////////////////
 
-package main
+package test
 
 import (
 	"fmt"
