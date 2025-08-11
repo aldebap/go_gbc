@@ -55,7 +55,7 @@ const (
 	DEC_D        = uint8(0x15)
 	LD_D_n       = uint8(0x16)
 	RLA          = uint8(0x17)
-	JR_E         = uint8(0x18)
+	JR_e         = uint8(0x18)
 	ADD_HL_DE    = uint8(0x19)
 	LD_A_ADDR_DE = uint8(0x1a)
 	DEC_DE       = uint8(0x1b)
@@ -344,7 +344,7 @@ func (c *SM83_CPU) executeInstruction() error {
 	case RLA:
 		return c.executeInstruction_RLA()
 
-	case JR_E:
+	case JR_e:
 		return c.executeInstruction_JR_e()
 
 	case ADD_HL_DE:
