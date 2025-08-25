@@ -172,7 +172,7 @@ func Test_RLCA(t *testing.T) {
 	})
 }
 
-// LD_ADDR_nn_SP instruction unit tests
+// LD (nn), SP instruction unit tests
 func Test_LD_ADDR_nn_SP(t *testing.T) {
 
 	var err error

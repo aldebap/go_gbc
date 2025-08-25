@@ -394,13 +394,13 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_DAA()
 
 	case JR_Z_e:
-		return nil // TODO: implement JR_Z_e
+		return c.executeInstruction_JR_Z_e()
 
 	case ADD_HL_HL:
 		return c.executeInstruction_ADD_HL_XX(c.h, c.l, REG_HL)
 
 	case LD_A_ADDR_HL_PLUS:
-		return nil // TODO: implement LD_A_ADDR_HL_PLUS
+		return c.executeInstruction_LD_A_ADDR_HL_PLUS()
 
 	case DEC_HL:
 		return c.executeInstruction_DEC_XX(&c.h, &c.l, REG_HL)
@@ -415,7 +415,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_X_n(&c.l, REG_L)
 
 	case CPL:
-		return nil // TODO: implement CPL
+		return c.executeInstruction_CPL()
 
 		//	instructions 0x30 - 0x3f
 	case JR_NC_e:

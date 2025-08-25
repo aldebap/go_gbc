@@ -40,6 +40,7 @@ func (c *SM83_CPU) executeInstruction_JR_NZ_e() error {
 func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
 	var err error
 
+	// TODO: review implementation of LD_ADDR_HL_PLUS_A
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
 		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
@@ -61,6 +62,7 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
 // execute instruction DAA
 func (c *SM83_CPU) executeInstruction_DAA() error {
 
+	// TODO: review implementation of DAA
 	/*
 		DAA: function() {
 			var a=Z80._r.a;
@@ -104,6 +106,94 @@ func (c *SM83_CPU) executeInstruction_DAA() error {
 
 	if c.trace {
 		fmt.Printf("[trace] DAA: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction JR_Z_e
+func (c *SM83_CPU) executeInstruction_JR_Z_e() error {
+
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		if c.flags&FLAG_Z != 0 {
+			c.pc += uint16(int8(c.n_msb))
+		}
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] JR_Z_e\n")
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_A_ADDR_HL_PLUS
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HL_PLUS() error {
+	var err error
+
+	// TODO: review implementation of LD_A_ADDR_HL_PLUS
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD A, (HL+): 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction CPL
+func (c *SM83_CPU) executeInstruction_CPL() error {
+
+	// TODO: review implementation of CPL
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		if c.flags&FLAG_H != 0 || c.a&0x0F > 0x09 {
+			c.a += 0x06
+		}
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return nil
+
+	case EXECUTION_CYCLE_2:
+		c.flags &= ^FLAG_N
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return nil
+
+	case EXECUTION_CYCLE_3:
+		if c.flags&FLAG_H != 0 || c.a > 0x99 {
+			c.a += 0x60
+			c.flags |= FLAG_C
+		}
+		c.cpu_state = EXECUTION_CYCLE_4
+
+		return nil
+
+	case EXECUTION_CYCLE_4:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] CPL: 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle

@@ -172,7 +172,7 @@ func Test_RLA(t *testing.T) {
 	})
 }
 
-// JR_e instruction unit tests
+// JR e instruction unit tests
 func Test_JR_e(t *testing.T) {
 
 	var err error
