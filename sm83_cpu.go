@@ -89,6 +89,23 @@ const (
 	DEC_A              = uint8(0x3d)
 	LD_A_n             = uint8(0x3e)
 
+	LD_B_B       = uint8(0x40)
+	LD_B_C       = uint8(0x41)
+	LD_B_D       = uint8(0x42)
+	LD_B_E       = uint8(0x43)
+	LD_B_H       = uint8(0x44)
+	LD_B_L       = uint8(0x45)
+	LD_B_ADDR_HL = uint8(0x46)
+	LD_B_A       = uint8(0x47)
+	LD_C_B       = uint8(0x48)
+	LD_C_C       = uint8(0x49)
+	LD_C_D       = uint8(0x4a)
+	LD_C_E       = uint8(0x4b)
+	LD_C_H       = uint8(0x4c)
+	LD_C_L       = uint8(0x4d)
+	LD_C_ADDR_HL = uint8(0x4e)
+	LD_C_A       = uint8(0x4f)
+
 	LD_A_ADDR_nn = uint8(0xfa)
 )
 
@@ -438,6 +455,55 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_A_n:
 		return c.executeInstruction_LD_X_n(&c.a, REG_A)
+
+		//	instructions 0x40 - 0x4f
+	case LD_B_B:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.b, REG_B)
+
+	case LD_B_C:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.c, REG_C)
+
+	case LD_B_D:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.d, REG_D)
+
+	case LD_B_E:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.e, REG_E)
+
+	case LD_B_H:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.h, REG_H)
+
+	case LD_B_L:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.l, REG_L)
+
+	case LD_B_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.b, REG_B)
+
+	case LD_B_A:
+		return c.executeInstruction_LD_X_Y(&c.b, REG_B, c.a, REG_A)
+
+	case LD_C_B:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.b, REG_B)
+
+	case LD_C_C:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.c, REG_C)
+
+	case LD_C_D:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.d, REG_D)
+
+	case LD_C_E:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.e, REG_E)
+
+	case LD_C_H:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.h, REG_H)
+
+	case LD_C_L:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.l, REG_L)
+
+	case LD_C_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.c, REG_C)
+
+	case LD_C_A:
+		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.a, REG_A)
 
 	case LD_A_ADDR_nn:
 		return c.executeInstruction_LD_A_ADDR_nn()
