@@ -10,17 +10,6 @@ import (
 	"fmt"
 )
 
-// execute instruction STOP
-func (c *SM83_CPU) executeInstruction_STOP() error {
-
-	if c.trace {
-		fmt.Printf("[trace] STOP\n")
-	}
-
-	//	TODO: add a flag to STOP/HALT CPU
-	return nil
-}
-
 // execute instruction RLA
 func (c *SM83_CPU) executeInstruction_RLA() error {
 

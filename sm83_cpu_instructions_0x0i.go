@@ -10,17 +10,6 @@ import (
 	"fmt"
 )
 
-// execute instruction NOP
-func (c *SM83_CPU) executeInstruction_NOP() error {
-
-	if c.trace {
-		fmt.Printf("[trace] NOP\n")
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction RLCA
 func (c *SM83_CPU) executeInstruction_RLCA() error {
 

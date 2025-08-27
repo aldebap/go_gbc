@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
-//	sm83_cpu_loadInstructions_test.go - Aug-3-2025 by aldebap
+//	sm83_cpu_miscellaneousInstructions_test.go - Aug-7-2025 by aldebap
 //
-//	Test cases for Sharp SM83 CPU - load instructions
+//	Test cases for Sharp SM83 CPU - miscellaneous instructions
 ////////////////////////////////////////////////////////////////////////////////
 
 package main
@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-// LD X, Y instruction unit tests
-func Test_LD_X_Y(t *testing.T) {
+// NOP instruction unit tests
+func Test_NOP(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> LD X, Y: scenario 1 - load B 8 bits register"), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> NOP (0x%02x): scenario 1 - do nothing", NOP), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -30,7 +30,7 @@ func Test_LD_X_Y(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_B_A,
+			NOP,
 			NOP,
 		})
 		if err != nil {
@@ -44,15 +44,14 @@ func Test_LD_X_Y(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0002, 0x0000, 0x00, 0x7e, 0x7e00, 0x0000, 0x0000)
+			0x0002, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x0000)
 
 		//	forced fetch instruction + one cicle to execute the instruction
-		cpu.a = 0x7e
 		cpu.pc++
 		cpu.cpu_state = EXECUTION_CYCLE_1
 
 		for i := range 1 {
-			err = cpu.executeInstruction_LD_X_Y(&cpu.b, "B", cpu.a, "A")
+			err = cpu.executeInstruction_NOP()
 			if err != nil {
 				t.Errorf("fail on cycle %d: %s", i, err.Error())
 			}
@@ -62,17 +61,17 @@ func Test_LD_X_Y(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction LD X, n: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction NOP: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
 
-// LD X, n instruction unit tests
-func Test_LD_X_n(t *testing.T) {
+// STOP instruction unit tests
+func Test_STOP(t *testing.T) {
 
 	var err error
 
-	t.Run(fmt.Sprintf(">>> LD X, n: scenario 1 - load C 8 bits register"), func(t *testing.T) {
+	t.Run(fmt.Sprintf(">>> STOP (0x%02x): scenario 1 - stop CPU", STOP), func(t *testing.T) {
 
 		//	create a new SM83 CPU
 		cpu := NewSM83_CPU(trace)
@@ -86,8 +85,7 @@ func Test_LD_X_n(t *testing.T) {
 			t.Errorf("fail creating new ROM memory")
 		}
 		err = rom.Load([]uint8{
-			LD_C_n,
-			0xe7,
+			STOP,
 			NOP,
 		})
 		if err != nil {
@@ -101,14 +99,14 @@ func Test_LD_X_n(t *testing.T) {
 		}
 
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
-			0x0003, 0x0000, 0x00, 0x00, 0x00e7, 0x0000, 0x0000)
+			0x0001, 0x0000, 0x00, 0x00, 0x0000, 0x0000, 0x0000)
 
-		//	forced fetch instruction + two cicles to execute the instruction
+		//	forced fetch instruction + one cicle to execute the instruction
 		cpu.pc++
 		cpu.cpu_state = EXECUTION_CYCLE_1
 
-		for i := range 2 {
-			err = cpu.executeInstruction_LD_X_n(&cpu.c, "C")
+		for i := range 1 {
+			err = cpu.executeInstruction_STOP()
 			if err != nil {
 				t.Errorf("fail on cycle %d: %s", i, err.Error())
 			}
@@ -118,7 +116,7 @@ func Test_LD_X_n(t *testing.T) {
 
 		//	check the invocation result
 		if want != got {
-			t.Errorf("failed executing instruction LD X, n: expected: %s\n\tresult: %s", want, got)
+			t.Errorf("failed executing instruction STOP: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
