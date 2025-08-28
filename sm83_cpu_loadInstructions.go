@@ -13,8 +13,8 @@ import (
 /*
 LD r8,r8    --> LD_X_Y
 LD r8,n8    --> LD_X_n
-LD r16,n16
-LD [HL],r8
+LD r16,n16  --> LD_XX_nn
+LD [HL],r8  --> LD_ADDR_HL_X
 LD [HL],n8
 LD r8,[HL]  --> LD_X_ADDR_HL
 LD [r16],A
@@ -69,9 +69,59 @@ func (c *SM83_CPU) executeInstruction_LD_X_n(r *uint8, reg string) error {
 	return c.fetchInstruction()
 }
 
+// execute instruction LD_XX_nn
+func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg string) error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		*msr = c.n_msb
+		*lsr = c.n_lsb
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD %s, nn: 0x%02x%02x\n", reg, *msr, *lsr)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_ADDR_HL_X
+func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_X(r uint8, reg string) error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), r)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (HL), %s: 0x%02x\n", reg, r)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
 /*
-LD r16,n16
-LD [HL],r8
 LD [HL],n8
 */
 
@@ -129,36 +179,6 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_XX_Y(msr uint8, lsr uint8, reg str
 
 	if c.trace {
 		fmt.Printf("[trace] LD (%s), %s: 0x%02x\n", reg, vreg, vr)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction LD_XX_nn
-func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg string) error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		c.n_lsb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-		c.n_msb, err = c.fetchInstructionArgument()
-		c.cpu_state = EXECUTION_CYCLE_3
-
-		return err
-
-	case EXECUTION_CYCLE_3:
-		*msr = c.n_msb
-		*lsr = c.n_lsb
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD %s, nn: 0x%02x%02x\n", reg, *msr, *lsr)
 	}
 
 	//	fecth next instruction in the same cycle
