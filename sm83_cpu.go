@@ -114,6 +114,40 @@ const (
 	LD_C_ADDR_HL = uint8(0x4e)
 	LD_C_A       = uint8(0x4f)
 
+	LD_D_B       = uint8(0x50)
+	LD_D_C       = uint8(0x51)
+	LD_D_D       = uint8(0x52)
+	LD_D_E       = uint8(0x53)
+	LD_D_H       = uint8(0x54)
+	LD_D_L       = uint8(0x55)
+	LD_D_ADDR_HL = uint8(0x56)
+	LD_D_A       = uint8(0x57)
+	LD_E_B       = uint8(0x58)
+	LD_E_C       = uint8(0x59)
+	LD_E_D       = uint8(0x5a)
+	LD_E_E       = uint8(0x5b)
+	LD_E_H       = uint8(0x5c)
+	LD_E_L       = uint8(0x5d)
+	LD_E_ADDR_HL = uint8(0x5e)
+	LD_E_A       = uint8(0x5f)
+
+	LD_H_B       = uint8(0x60)
+	LD_H_C       = uint8(0x61)
+	LD_H_D       = uint8(0x62)
+	LD_H_E       = uint8(0x63)
+	LD_H_H       = uint8(0x64)
+	LD_H_L       = uint8(0x65)
+	LD_H_ADDR_HL = uint8(0x66)
+	LD_H_A       = uint8(0x67)
+	LD_L_B       = uint8(0x68)
+	LD_L_C       = uint8(0x69)
+	LD_L_D       = uint8(0x6a)
+	LD_L_E       = uint8(0x6b)
+	LD_L_H       = uint8(0x6c)
+	LD_L_L       = uint8(0x6d)
+	LD_L_ADDR_HL = uint8(0x6e)
+	LD_L_A       = uint8(0x6f)
+
 	LD_ADDR_HL_B = uint8(0x70)
 	LD_ADDR_HL_C = uint8(0x71)
 	LD_ADDR_HL_D = uint8(0x72)
@@ -130,6 +164,8 @@ const (
 	LD_A_L       = uint8(0x7d)
 	LD_A_ADDR_HL = uint8(0x7e)
 	LD_A_A       = uint8(0x7f)
+
+	LD_ADDR_nn_A = uint8(0xea)
 
 	LD_A_ADDR_nn = uint8(0xfa)
 )
@@ -554,10 +590,108 @@ func (c *SM83_CPU) executeInstruction() error {
 	case LD_C_A:
 		return c.executeInstruction_LD_X_Y(&c.c, REG_C, c.a, REG_A)
 
+		//	instructions 0x50 - 0x5f
+	case LD_D_B:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.b, REG_B)
+
+	case LD_D_C:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.c, REG_C)
+
+	case LD_D_D:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.d, REG_D)
+
+	case LD_D_E:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.e, REG_E)
+
+	case LD_D_H:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.h, REG_H)
+
+	case LD_D_L:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.l, REG_L)
+
+	case LD_D_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.d, REG_D)
+
+	case LD_D_A:
+		return c.executeInstruction_LD_X_Y(&c.d, REG_D, c.a, REG_A)
+
+	case LD_E_B:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.b, REG_B)
+
+	case LD_E_C:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.c, REG_C)
+
+	case LD_E_D:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.d, REG_D)
+
+	case LD_E_E:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.e, REG_E)
+
+	case LD_E_H:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.h, REG_H)
+
+	case LD_E_L:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.l, REG_L)
+
+	case LD_E_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.e, REG_E)
+
+	case LD_E_A:
+		return c.executeInstruction_LD_X_Y(&c.e, REG_E, c.a, REG_A)
+
+		//	instructions 0x60 - 0x6f
+	case LD_H_B:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.b, REG_B)
+
+	case LD_H_C:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.c, REG_C)
+
+	case LD_H_D:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.d, REG_D)
+
+	case LD_H_E:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.e, REG_E)
+
+	case LD_H_H:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.h, REG_H)
+
+	case LD_H_L:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.l, REG_L)
+
+	case LD_H_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.h, REG_H)
+
+	case LD_H_A:
+		return c.executeInstruction_LD_X_Y(&c.h, REG_H, c.a, REG_A)
+
+	case LD_L_B:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.b, REG_B)
+
+	case LD_L_C:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.c, REG_C)
+
+	case LD_L_D:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.d, REG_D)
+
+	case LD_L_E:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.e, REG_E)
+
+	case LD_L_H:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.h, REG_H)
+
+	case LD_L_L:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.l, REG_L)
+
+	case LD_L_ADDR_HL:
+		return c.executeInstruction_LD_X_ADDR_HL(&c.e, REG_L)
+
+	case LD_L_A:
+		return c.executeInstruction_LD_X_Y(&c.l, REG_L, c.a, REG_A)
+
+		//	instructions 0x70 - 0x7f
 	case LD_ADDR_HL_B:
 		return c.executeInstruction_LD_ADDR_HL_X(c.b, REG_B)
 
-		//	instructions 0x70 - 0x7f
 	case LD_ADDR_HL_C:
 		return c.executeInstruction_LD_ADDR_HL_X(c.c, REG_C)
 
@@ -602,6 +736,10 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_A_A:
 		return c.executeInstruction_LD_X_Y(&c.a, REG_A, c.a, REG_A)
+
+		//	instructions 0xe0 - 0xef
+	case LD_ADDR_nn_A:
+		return c.executeInstruction_LD_ADDR_nn_A()
 
 		//	instructions 0xf0 - 0xff
 	case LD_A_ADDR_nn:

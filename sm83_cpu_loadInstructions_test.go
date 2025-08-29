@@ -477,3 +477,83 @@ func Test_LD_ADDR_XX_A(t *testing.T) {
 		}
 	})
 }
+
+// LD_ADDR_nn_A instruction unit tests
+func Test_LD_ADDR_nn_A(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> LD (nn), A: scenario 1 - write A into (nn)"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_ADDR_nn_A,
+			0x00,
+			0xc0,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new RAM memory bank
+		ram := NewRAM_memory(8)
+		if ram == nil {
+			t.Errorf("fail creating new RAM memory")
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(ram, 0xC000)
+		if err != nil {
+			t.Errorf("fail connecting RAM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0004, 0x0000, 0x00, 0x32, 0x0000, 0x0000, 0x0000)
+		wantData := uint8(0x32)
+
+		//	forced fetch instruction + three cicles to execute the instruction
+		cpu.a = 0x32
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 4 {
+			err = cpu.executeInstruction_LD_ADDR_nn_A()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD (nn), A: expected: %s\n\tresult: %s", want, got)
+		}
+
+		gotData, err := ram.ReadByte(0x0000)
+		if err != nil {
+			t.Errorf("fail reading result from RAM: %s", err.Error())
+		}
+
+		if wantData != gotData {
+			t.Errorf("failed executing instruction LD (nn), A: expected: %02x\n\tresult: %02x", wantData, gotData)
+		}
+	})
+}

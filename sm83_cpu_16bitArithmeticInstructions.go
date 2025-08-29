@@ -11,9 +11,9 @@ import (
 )
 
 /*
-ADD HL,r16 --> ADD_HL_XX
-DEC r16    --> DEC_XX
-INC r16    --> INC_XX
+ADD HL,r16 --> ADD_HL_XX (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADD_HL,r16)
+DEC r16    --> DEC_XX    (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#DEC_r16)
+INC r16    --> INC_XX    (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#INC_r16)
 */
 
 // execute instruction ADD_HL_XX

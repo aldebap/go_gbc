@@ -18,7 +18,7 @@ LD [HL],r8  --> LD_ADDR_HL_X (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_
 LD [HL],n8  --> LD_ADDR_HL_n (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,n8)
 LD r8,[HL]  --> LD_X_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,_HL_)
 LD [r16],A  --> LD_ADDR_XX_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__r16_,A)
-LD [n16],A
+LD [n16],A  --> LD_ADDR_nn_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__n16_,A)
 LDH [n16],A
 LDH [C],A
 LD A,[r16]
@@ -33,6 +33,7 @@ LD A,[HLD]
 
 // execute instruction LD_X_Y
 func (c *SM83_CPU) executeInstruction_LD_X_Y(x *uint8, x_reg string, y uint8, y_reg string) error {
+
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
 		*x = y
@@ -194,8 +195,41 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_XX_A(x_msr uint8, x_lsr uint8, x_r
 	return c.fetchInstruction()
 }
 
+// execute instruction LD_ADDR_nn_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_A() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), c.a)
+		c.cpu_state = EXECUTION_CYCLE_4
+
+		return err
+
+	case EXECUTION_CYCLE_4:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (%02x%02x), A: 0x%02x\n", c.n_msb, c.n_lsb, c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
 /*
-LD [n16],A
 LDH [n16],A
 LDH [C],A
 LD A,[r16]  --> LD_A_ADDR_XX
