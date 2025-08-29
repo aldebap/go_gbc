@@ -11,13 +11,13 @@ import (
 )
 
 /*
-LD r8,r8    --> LD_X_Y
-LD r8,n8    --> LD_X_n
-LD r16,n16  --> LD_XX_nn
-LD [HL],r8  --> LD_ADDR_HL_X
-LD [HL],n8
-LD r8,[HL]  --> LD_X_ADDR_HL
-LD [r16],A
+LD r8,r8    --> LD_X_Y       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,r8)
+LD r8,n8    --> LD_X_n       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,n8)
+LD r16,n16  --> LD_XX_nn     (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r16,n16)
+LD [HL],r8  --> LD_ADDR_HL_X (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,r8)
+LD [HL],n8  --> LD_ADDR_HL_n (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,n8)
+LD r8,[HL]  --> LD_X_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,_HL_)
+LD [r16],A  --> LD_ADDR_XX_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__r16_,A)
 LD [n16],A
 LDH [n16],A
 LDH [C],A
@@ -32,14 +32,14 @@ LD A,[HLD]
 */
 
 // execute instruction LD_X_Y
-func (c *SM83_CPU) executeInstruction_LD_X_Y(r *uint8, reg string, vr uint8, vreg string) error {
+func (c *SM83_CPU) executeInstruction_LD_X_Y(x *uint8, x_reg string, y uint8, y_reg string) error {
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		*r = vr
+		*x = y
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD %s, %s: 0x%02x\n", reg, vreg, vr)
+		fmt.Printf("[trace] LD %s, %s: 0x%02x\n", x_reg, y_reg, y)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -47,7 +47,7 @@ func (c *SM83_CPU) executeInstruction_LD_X_Y(r *uint8, reg string, vr uint8, vre
 }
 
 // execute instruction LD_X_n
-func (c *SM83_CPU) executeInstruction_LD_X_n(r *uint8, reg string) error {
+func (c *SM83_CPU) executeInstruction_LD_X_n(x *uint8, x_reg string) error {
 	var err error
 
 	switch c.cpu_state {
@@ -58,11 +58,11 @@ func (c *SM83_CPU) executeInstruction_LD_X_n(r *uint8, reg string) error {
 		return err
 
 	case EXECUTION_CYCLE_2:
-		*r = c.n_msb
+		*x = c.n_msb
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD %s, n: 0x%02x\n", reg, *r)
+		fmt.Printf("[trace] LD %s, n: 0x%02x\n", x_reg, *x)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -70,7 +70,7 @@ func (c *SM83_CPU) executeInstruction_LD_X_n(r *uint8, reg string) error {
 }
 
 // execute instruction LD_XX_nn
-func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg string) error {
+func (c *SM83_CPU) executeInstruction_LD_XX_nn(x_msr *uint8, x_lsr *uint8, x_reg string) error {
 	var err error
 
 	switch c.cpu_state {
@@ -87,12 +87,12 @@ func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg strin
 		return err
 
 	case EXECUTION_CYCLE_3:
-		*msr = c.n_msb
-		*lsr = c.n_lsb
+		*x_msr = c.n_msb
+		*x_lsr = c.n_lsb
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD %s, nn: 0x%02x%02x\n", reg, *msr, *lsr)
+		fmt.Printf("[trace] LD %s, nn: 0x%02x%02x\n", x_reg, *x_msr, *x_lsr)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -100,12 +100,12 @@ func (c *SM83_CPU) executeInstruction_LD_XX_nn(msr *uint8, lsr *uint8, reg strin
 }
 
 // execute instruction LD_ADDR_HL_X
-func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_X(r uint8, reg string) error {
+func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_X(x uint8, x_reg string) error {
 	var err error
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), r)
+		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), x)
 		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
@@ -114,19 +114,43 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_X(r uint8, reg string) error {
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD (HL), %s: 0x%02x\n", reg, r)
+		fmt.Printf("[trace] LD (HL), %s: 0x%02x\n", x_reg, x)
 	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
 
-/*
-LD [HL],n8
-*/
+// execute instruction LD_ADDR_HL_n
+func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_n() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.n_lsb)
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (HL), n: 0x%02x\n", c.n_lsb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
 
 // execute instruction LD_X_ADDR_HL
-func (c *SM83_CPU) executeInstruction_LD_X_ADDR_HL(r *uint8, reg string) error {
+func (c *SM83_CPU) executeInstruction_LD_X_ADDR_HL(x *uint8, x_reg string) error {
 	var err error
 
 	switch c.cpu_state {
@@ -137,11 +161,33 @@ func (c *SM83_CPU) executeInstruction_LD_X_ADDR_HL(r *uint8, reg string) error {
 		return err
 
 	case EXECUTION_CYCLE_2:
-		*r = c.n_lsb
+		*x = c.n_lsb
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD %s, (HL): 0x%02x\n", reg, c.n_lsb)
+		fmt.Printf("[trace] LD %s, (HL): 0x%02x\n", x_reg, c.n_lsb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_ADDR_XX_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_XX_A(x_msr uint8, x_lsr uint8, x_reg string) error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		err = c.writeByteIntoMemory(uint16(x_msr)<<8|uint16(x_lsr), c.a)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (%s), A: 0x%02x\n", x_reg, c.a)
 	}
 
 	//	fecth next instruction in the same cycle
@@ -149,11 +195,10 @@ func (c *SM83_CPU) executeInstruction_LD_X_ADDR_HL(r *uint8, reg string) error {
 }
 
 /*
-LD [r16],A
 LD [n16],A
 LDH [n16],A
 LDH [C],A
-LD A,[r16]
+LD A,[r16]  --> LD_A_ADDR_XX
 LD A,[n16]
 LDH A,[n16]
 LDH A,[C]
@@ -163,35 +208,13 @@ LD A,[HLI]
 LD A,[HLD]
 */
 
-// execute instruction LD_ADDR_XX_Y
-func (c *SM83_CPU) executeInstruction_LD_ADDR_XX_Y(msr uint8, lsr uint8, reg string, vr uint8, vreg string) error {
-	var err error
-
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(msr)<<8|uint16(lsr), vr)
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD (%s), %s: 0x%02x\n", reg, vreg, vr)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction LD_A_ADDR_XX
-func (c *SM83_CPU) executeInstruction_LD_A_ADDR_XX(msr uint8, lsr uint8, reg string) error {
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_XX(x_msr uint8, x_lsr uint8, x_reg string) error {
 	var err error
 
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
-		c.n_lsb, err = c.readByteFromMemory(uint16(msr)<<8 | uint16(lsr))
+		c.n_lsb, err = c.readByteFromMemory(uint16(x_msr)<<8 | uint16(x_lsr))
 		c.cpu_state = EXECUTION_CYCLE_2
 
 		return err
@@ -201,7 +224,7 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_XX(msr uint8, lsr uint8, reg str
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD A, (%s): 0x%02x\n", reg, c.a)
+		fmt.Printf("[trace] LD A, (%s): 0x%02x\n", x_reg, c.a)
 	}
 
 	//	fecth next instruction in the same cycle

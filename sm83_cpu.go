@@ -85,6 +85,14 @@ const (
 	LD_SP_nn           = uint8(0x31)
 	LD_ADDR_HL_MINUS_A = uint8(0x32)
 	INC_SP             = uint8(0x33)
+	INC_ADDR_HL        = uint8(0x34)
+	DEC_ADDR_HL        = uint8(0x35)
+	LD_ADDR_HL_n       = uint8(0x36)
+	SCF                = uint8(0x37)
+	JR_C_e             = uint8(0x38)
+	ADD_HL_SP          = uint8(0x39)
+	LD_A_ADDR_HL_MINUS = uint8(0x3a)
+	DEC_SP             = uint8(0x3b)
 	INC_A              = uint8(0x3c)
 	DEC_A              = uint8(0x3d)
 	LD_A_n             = uint8(0x3e)
@@ -312,7 +320,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_XX_nn(&c.b, &c.c, REG_BC)
 
 	case LD_ADDR_BC_A:
-		return c.executeInstruction_LD_ADDR_XX_Y(c.b, c.c, REG_BC, c.a, REG_A)
+		return c.executeInstruction_LD_ADDR_XX_A(c.b, c.c, REG_BC)
 
 	case INC_BC:
 		return c.executeInstruction_INC_XX(&c.b, &c.c, REG_BC)
@@ -361,7 +369,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_XX_nn(&c.d, &c.e, REG_DE)
 
 	case LD_ADDR_DE_A:
-		return c.executeInstruction_LD_ADDR_XX_Y(c.d, c.e, REG_DE, c.a, REG_A)
+		return c.executeInstruction_LD_ADDR_XX_A(c.d, c.e, REG_DE)
 
 	case INC_DE:
 		return c.executeInstruction_INC_XX(&c.d, &c.e, REG_DE)
@@ -463,6 +471,30 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case INC_SP:
 		return c.executeInstruction_INC_XX(&c.s, &c.p, REG_SP)
+
+	case INC_ADDR_HL:
+		return nil // TODO: implement INC_ADDR_HL
+
+	case DEC_ADDR_HL:
+		return nil // TODO: implement DEC_ADDR_HL
+
+	case LD_ADDR_HL_n:
+		return c.executeInstruction_LD_ADDR_HL_n()
+
+	case SCF:
+		return nil // TODO: implement SCF
+
+	case JR_C_e:
+		return nil // TODO: implement JR_C_e
+
+	case ADD_HL_SP:
+		return c.executeInstruction_ADD_HL_XX(c.s, c.p, REG_SP)
+
+	case LD_A_ADDR_HL_MINUS:
+		return nil // TODO: implement LD_A_ADDR_HL_MINUS
+
+	case DEC_SP:
+		return c.executeInstruction_DEC_XX(&c.s, &c.p, REG_SP)
 
 	case INC_A:
 		return c.executeInstruction_INC_X(&c.a, REG_A)
