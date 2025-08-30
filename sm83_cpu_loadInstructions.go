@@ -19,9 +19,9 @@ LD [HL],n8  --> LD_ADDR_HL_n (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_
 LD r8,[HL]  --> LD_X_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,_HL_)
 LD [r16],A  --> LD_ADDR_XX_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__r16_,A)
 LD [n16],A  --> LD_ADDR_nn_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__n16_,A)
-LDH [n16],A
-LDH [C],A
-LD A,[r16]
+LDH [n16],A --> LDH_ADDR_n_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__n16_,A)
+LDH [C],A   --> LDH_ADDR_C_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__C_,A)
+LD A,[r16]  --> LD_A_ADDR_XX (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_r16_)
 LD A,[n16]
 LDH A,[n16]
 LDH A,[C]
@@ -222,25 +222,65 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_nn_A() error {
 	}
 
 	if c.trace {
-		fmt.Printf("[trace] LD (%02x%02x), A: 0x%02x\n", c.n_msb, c.n_lsb, c.a)
+		fmt.Printf("[trace] LD (0x%02x%02x), A: 0x%02x\n", c.n_msb, c.n_lsb, c.a)
 	}
 
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
 
-/*
-LDH [n16],A
-LDH [C],A
-LD A,[r16]  --> LD_A_ADDR_XX
-LD A,[n16]
-LDH A,[n16]
-LDH A,[C]
-LD [HLI],A
-LD [HLD],A
-LD A,[HLI]
-LD A,[HLD]
-*/
+// execute instruction LDH_ADDR_n_A
+func (c *SM83_CPU) executeInstruction_LDH_ADDR_n_A() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		c.n_msb = 0xff
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), c.a)
+		c.cpu_state = EXECUTION_CYCLE_3
+
+		return err
+
+	case EXECUTION_CYCLE_3:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LDH (0x%02x%02x), A: 0x%02x\n", c.n_msb, c.n_lsb, c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LDH_ADDR_C_A
+func (c *SM83_CPU) executeInstruction_LDH_ADDR_C_A() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb = c.c
+		c.n_msb = 0xff
+		err = c.writeByteIntoMemory(uint16(c.n_msb)<<8|uint16(c.n_lsb), c.a)
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LDH (C), A: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
 
 // execute instruction LD_A_ADDR_XX
 func (c *SM83_CPU) executeInstruction_LD_A_ADDR_XX(x_msr uint8, x_lsr uint8, x_reg string) error {
@@ -264,3 +304,13 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_XX(x_msr uint8, x_lsr uint8, x_r
 	//	fecth next instruction in the same cycle
 	return c.fetchInstruction()
 }
+
+/*
+LD A,[n16]
+LDH A,[n16]
+LDH A,[C]
+LD [HLI],A
+LD [HLD],A
+LD A,[HLI]
+LD A,[HLD]
+*/

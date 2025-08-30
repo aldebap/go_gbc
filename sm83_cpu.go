@@ -165,8 +165,14 @@ const (
 	LD_A_ADDR_HL = uint8(0x7e)
 	LD_A_A       = uint8(0x7f)
 
+	LDH_ADDR_n_A = uint8(0xe0)
+	POP_HL       = uint8(0xe1)
+	LDH_ADDR_C_A = uint8(0xe2)
 	LD_ADDR_nn_A = uint8(0xea)
 
+	LDH_A_ADDR_n = uint8(0xf0)
+	POP_AF       = uint8(0xf1)
+	LDH_A_ADDR_C = uint8(0xf2)
 	LD_A_ADDR_nn = uint8(0xfa)
 )
 
@@ -738,10 +744,28 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_LD_X_Y(&c.a, REG_A, c.a, REG_A)
 
 		//	instructions 0xe0 - 0xef
+	case LDH_ADDR_n_A:
+		return c.executeInstruction_LDH_ADDR_n_A()
+
+	case POP_HL:
+		return nil // TODO: implement POP_HL
+
+	case LDH_ADDR_C_A:
+		return c.executeInstruction_LDH_ADDR_C_A()
+
 	case LD_ADDR_nn_A:
 		return c.executeInstruction_LD_ADDR_nn_A()
 
 		//	instructions 0xf0 - 0xff
+	case LDH_A_ADDR_n:
+		return nil // TODO: implement LDH_A_ADDR_n
+
+	case POP_AF:
+		return nil // TODO: implement POP_AF
+
+	case LDH_A_ADDR_C:
+		return nil // TODO: implement LDH_A_ADDR_C
+
 	case LD_A_ADDR_nn:
 		return c.executeInstruction_LD_A_ADDR_nn()
 	}

@@ -228,7 +228,7 @@ func Test_LD_ADDR_HL_X(t *testing.T) {
 			0x0002, 0x0000, 0x00, 0x6c, 0x0000, 0x0000, 0xc000)
 		wantData := uint8(0x6c)
 
-		//	forced fetch instruction + three cicles to execute the instruction
+		//	forced fetch instruction + two cicles to execute the instruction
 		cpu.a = 0x6c
 		cpu.h = 0xc0
 		cpu.l = 0x00
@@ -376,7 +376,7 @@ func Test_LD_X_ADDR_HL(t *testing.T) {
 		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
 			0x0002, 0x0000, 0x00, 0x00, 0x00a5, 0x0000, 0x0002)
 
-		//	forced fetch instruction + three cicles to execute the instruction
+		//	forced fetch instruction + two cicles to execute the instruction
 		cpu.h = 0x00
 		cpu.l = 0x02
 		cpu.pc++
@@ -446,7 +446,7 @@ func Test_LD_ADDR_XX_A(t *testing.T) {
 			0x0002, 0x0000, 0x00, 0x49, 0x0000, 0xc000, 0x0000)
 		wantData := uint8(0x49)
 
-		//	forced fetch instruction + three cicles to execute the instruction
+		//	forced fetch instruction + two cicles to execute the instruction
 		cpu.a = 0x49
 		cpu.d = 0xc0
 		cpu.e = 0x00
@@ -528,7 +528,7 @@ func Test_LD_ADDR_nn_A(t *testing.T) {
 			0x0004, 0x0000, 0x00, 0x32, 0x0000, 0x0000, 0x0000)
 		wantData := uint8(0x32)
 
-		//	forced fetch instruction + three cicles to execute the instruction
+		//	forced fetch instruction + efour cicles to execute the instruction
 		cpu.a = 0x32
 		cpu.pc++
 		cpu.cpu_state = EXECUTION_CYCLE_1
@@ -554,6 +554,246 @@ func Test_LD_ADDR_nn_A(t *testing.T) {
 
 		if wantData != gotData {
 			t.Errorf("failed executing instruction LD (nn), A: expected: %02x\n\tresult: %02x", wantData, gotData)
+		}
+	})
+}
+
+// LDH_ADDR_n_A instruction unit tests
+func Test_LDH_ADDR_n_A(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> LDH (n), A: scenario 1 - write A into (Hn)"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LDH_ADDR_n_A,
+			0x02,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new RAM memory bank
+		ram := NewRAM_memory(8)
+		if ram == nil {
+			t.Errorf("fail creating new RAM memory")
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(ram, 0xff00)
+		if err != nil {
+			t.Errorf("fail connecting RAM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0003, 0x0000, 0x00, 0x46, 0x0000, 0x0000, 0x0000)
+		wantData := uint8(0x46)
+
+		//	forced fetch instruction + three cicles to execute the instruction
+		cpu.a = 0x46
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 3 {
+			err = cpu.executeInstruction_LDH_ADDR_n_A()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LDH (n), A: expected: %s\n\tresult: %s", want, got)
+		}
+
+		gotData, err := ram.ReadByte(0x0002)
+		if err != nil {
+			t.Errorf("fail reading result from RAM: %s", err.Error())
+		}
+
+		if wantData != gotData {
+			t.Errorf("failed executing instruction LDH (n), A: expected: %02x\n\tresult: %02x", wantData, gotData)
+		}
+	})
+}
+
+// LDH_ADDR_C_A instruction unit tests
+func Test_LDH_ADDR_C_A(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> LDH (C), A: scenario 1 - write A into (C)"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LDH_ADDR_C_A,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new RAM memory bank
+		ram := NewRAM_memory(8)
+		if ram == nil {
+			t.Errorf("fail creating new RAM memory")
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(ram, 0xff00)
+		if err != nil {
+			t.Errorf("fail connecting RAM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x00, 0x21, 0x0004, 0x0000, 0x0000)
+		wantData := uint8(0x21)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0x21
+		cpu.c = 0x04
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_LDH_ADDR_C_A()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LDH (C), A: expected: %s\n\tresult: %s", want, got)
+		}
+
+		gotData, err := ram.ReadByte(0x0004)
+		if err != nil {
+			t.Errorf("fail reading result from RAM: %s", err.Error())
+		}
+
+		if wantData != gotData {
+			t.Errorf("failed executing instruction LDH (C), A: expected: %02x\n\tresult: %02x", wantData, gotData)
+		}
+	})
+}
+
+// LD_A_ADDR_XX instruction unit tests
+func Test_LD_A_ADDR_XX(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> LD A, (XX): scenario 1 - load A from (BC)"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			LD_A_ADDR_BC,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new cartrige ROM memory bank
+		cartridgeRom := &ROM_memory{}
+		if cartridgeRom == nil {
+			t.Errorf("fail creating new cartridge ROM memory")
+		}
+		err = cartridgeRom.Load([]uint8{
+			0x08,
+			0x09,
+			0x1a,
+			0x2b,
+			0x3c,
+			0x4d,
+			0x5e,
+			0x6f,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(cartridgeRom, 0x2000)
+		if err != nil {
+			t.Errorf("fail connecting cartridge ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x00, 0x4d, 0x2005, 0x0000, 0x0000)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.b = 0x20
+		cpu.c = 0x05
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_LD_A_ADDR_XX(cpu.b, cpu.c, "BC")
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction LD A, (XX): expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }
