@@ -36,29 +36,6 @@ func (c *SM83_CPU) executeInstruction_JR_NZ_e() error {
 	return c.fetchInstruction()
 }
 
-// execute instruction LD_ADDR_HL_PLUS_A
-func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
-	var err error
-
-	// TODO: review implementation of LD_ADDR_HL_PLUS_A
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD (HL+), A: 0x%02x\n", c.a)
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
 // execute instruction DAA
 func (c *SM83_CPU) executeInstruction_DAA() error {
 
@@ -132,29 +109,6 @@ func (c *SM83_CPU) executeInstruction_JR_Z_e() error {
 
 	if c.trace {
 		fmt.Printf("[trace] JR_Z_e\n")
-	}
-
-	//	fecth next instruction in the same cycle
-	return c.fetchInstruction()
-}
-
-// execute instruction LD_A_ADDR_HL_PLUS
-func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HL_PLUS() error {
-	var err error
-
-	// TODO: review implementation of LD_A_ADDR_HL_PLUS
-	switch c.cpu_state {
-	case EXECUTION_CYCLE_1:
-		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
-		c.cpu_state = EXECUTION_CYCLE_2
-
-		return err
-
-	case EXECUTION_CYCLE_2:
-	}
-
-	if c.trace {
-		fmt.Printf("[trace] LD A, (HL+): 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle
