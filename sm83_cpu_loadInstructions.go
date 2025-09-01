@@ -11,24 +11,24 @@ import (
 )
 
 /*
-LD r8,r8    --> LD_X_Y       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,r8)
-LD r8,n8    --> LD_X_n       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,n8)
-LD r16,n16  --> LD_XX_nn     (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r16,n16)
-LD [HL],r8  --> LD_ADDR_HL_X (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,r8)
-LD [HL],n8  --> LD_ADDR_HL_n (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,n8)
-LD r8,[HL]  --> LD_X_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,_HL_)
-LD [r16],A  --> LD_ADDR_XX_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__r16_,A)
-LD [n16],A  --> LD_ADDR_nn_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__n16_,A)
-LDH [n16],A --> LDH_ADDR_n_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__n16_,A)
-LDH [C],A   --> LDH_ADDR_C_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__C_,A)
-LD A,[r16]  --> LD_A_ADDR_XX (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_r16_)
-LD A,[n16]  --> LD_A_ADDR_nn (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_n16_)
-LDH A,[n16] --> LDH_A_ADDR_n (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH_A,_n16_)
-LDH A,[C]   --> LDH_A_ADDR_C (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH_A,_C_)
-LD [HLI],A
-LD [HLD],A
-LD A,[HLI]
-LD A,[HLD]
+LD r8,r8    --> LD_X_Y        (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,r8)
+LD r8,n8    --> LD_X_n        (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,n8)
+LD r16,n16  --> LD_XX_nn      (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r16,n16)
+LD [HL],r8  --> LD_ADDR_HL_X  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,r8)
+LD [HL],n8  --> LD_ADDR_HL_n  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HL_,n8)
+LD r8,[HL]  --> LD_X_ADDR_HL  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_r8,_HL_)
+LD [r16],A  --> LD_ADDR_XX_A  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__r16_,A)
+LD [n16],A  --> LD_ADDR_nn_A  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__n16_,A)
+LDH [n16],A --> LDH_ADDR_n_A  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__n16_,A)
+LDH [C],A   --> LDH_ADDR_C_A  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH__C_,A)
+LD A,[r16]  --> LD_A_ADDR_XX  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_r16_)
+LD A,[n16]  --> LD_A_ADDR_nn  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_n16_)
+LDH A,[n16] --> LDH_A_ADDR_n  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH_A,_n16_)
+LDH A,[C]   --> LDH_A_ADDR_C  (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LDH_A,_C_)
+LD [HLI],A  --> LD_ADDR_HLI_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HLI_,A)
+LD [HLD],A  --> LD_ADDR_HLD_A (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD__HLD_,A)
+LD A,[HLI]  --> LD_A_ADDR_HLI (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_HLI_)
+LD A,[HLD]  --> LD_A_ADDR_HLD (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#LD_A,_HLD_)
 */
 
 // execute instruction LD_X_Y
@@ -392,18 +392,10 @@ func (c *SM83_CPU) executeInstruction_LDH_A_ADDR_C() error {
 	return c.fetchInstruction()
 }
 
-/*
-LD [HLI],A
-LD [HLD],A
-LD A,[HLI]
-LD A,[HLD]
-*/
-
-// execute instruction LD_ADDR_HL_PLUS_A
-func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
+// execute instruction LD_ADDR_HLI_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_HLI_A() error {
 	var err error
 
-	// TODO: review implementation of LD_ADDR_HL_PLUS_A
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
 		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
@@ -412,6 +404,11 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
 		return err
 
 	case EXECUTION_CYCLE_2:
+		reg16 := uint16(c.h)<<8 | uint16(c.l)
+		reg16++
+
+		c.h = uint8((reg16 & 0xff00) >> 8)
+		c.l = uint8(reg16 & 0x00ff)
 	}
 
 	if c.trace {
@@ -422,11 +419,10 @@ func (c *SM83_CPU) executeInstruction_LD_ADDR_HL_PLUS_A() error {
 	return c.fetchInstruction()
 }
 
-// execute instruction LD_A_ADDR_HL_PLUS
-func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HL_PLUS() error {
+// execute instruction LD_ADDR_HLD_A
+func (c *SM83_CPU) executeInstruction_LD_ADDR_HLD_A() error {
 	var err error
 
-	// TODO: review implementation of LD_A_ADDR_HL_PLUS
 	switch c.cpu_state {
 	case EXECUTION_CYCLE_1:
 		err = c.writeByteIntoMemory(uint16(c.h)<<8|uint16(c.l), c.a)
@@ -435,10 +431,69 @@ func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HL_PLUS() error {
 		return err
 
 	case EXECUTION_CYCLE_2:
+		reg16 := uint16(c.h)<<8 | uint16(c.l)
+		reg16--
+
+		c.h = uint8((reg16 & 0xff00) >> 8)
+		c.l = uint8(reg16 & 0x00ff)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD (HL-), A: 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_A_ADDR_HLI
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HLI() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.a, err = c.readByteFromMemory(uint16(c.h)<<8 | uint16(c.l))
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		reg16 := uint16(c.h)<<8 | uint16(c.l)
+		reg16++
+
+		c.h = uint8((reg16 & 0xff00) >> 8)
+		c.l = uint8(reg16 & 0x00ff)
 	}
 
 	if c.trace {
 		fmt.Printf("[trace] LD A, (HL+): 0x%02x\n", c.a)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction LD_A_ADDR_HLD
+func (c *SM83_CPU) executeInstruction_LD_A_ADDR_HLD() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.a, err = c.readByteFromMemory(uint16(c.h)<<8 | uint16(c.l))
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		reg16 := uint16(c.h)<<8 | uint16(c.l)
+		reg16--
+
+		c.h = uint8((reg16 & 0xff00) >> 8)
+		c.l = uint8(reg16 & 0x00ff)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] LD A, (HL-): 0x%02x\n", c.a)
 	}
 
 	//	fecth next instruction in the same cycle

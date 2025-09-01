@@ -31,6 +31,7 @@ SUB A,r8
 SUB A,[HL]
 SUB A,n8
 */
+
 // execute instruction DEC_X
 func (c *SM83_CPU) executeInstruction_DEC_X(r *uint8, reg string) error {
 

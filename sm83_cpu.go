@@ -64,38 +64,38 @@ const (
 	LD_E_n       = uint8(0x1e)
 	RRA          = uint8(0x1f)
 
-	JR_NZ_e           = uint8(0x20)
-	LD_HL_nn          = uint8(0x21)
-	LD_ADDR_HL_PLUS_A = uint8(0x22)
-	INC_HL            = uint8(0x23)
-	INC_H             = uint8(0x24)
-	DEC_H             = uint8(0x25)
-	LD_H_n            = uint8(0x26)
-	DAA               = uint8(0x27)
-	JR_Z_e            = uint8(0x28)
-	ADD_HL_HL         = uint8(0x29)
-	LD_A_ADDR_HL_PLUS = uint8(0x2a)
-	DEC_HL            = uint8(0x2b)
-	INC_L             = uint8(0x2c)
-	DEC_L             = uint8(0x2d)
-	LD_L_n            = uint8(0x2e)
-	CPL               = uint8(0x2f)
+	JR_NZ_e       = uint8(0x20)
+	LD_HL_nn      = uint8(0x21)
+	LD_ADDR_HLI_A = uint8(0x22)
+	INC_HL        = uint8(0x23)
+	INC_H         = uint8(0x24)
+	DEC_H         = uint8(0x25)
+	LD_H_n        = uint8(0x26)
+	DAA           = uint8(0x27)
+	JR_Z_e        = uint8(0x28)
+	ADD_HL_HL     = uint8(0x29)
+	LD_A_ADDR_HLI = uint8(0x2a)
+	DEC_HL        = uint8(0x2b)
+	INC_L         = uint8(0x2c)
+	DEC_L         = uint8(0x2d)
+	LD_L_n        = uint8(0x2e)
+	CPL           = uint8(0x2f)
 
-	JR_NC_e            = uint8(0x30)
-	LD_SP_nn           = uint8(0x31)
-	LD_ADDR_HL_MINUS_A = uint8(0x32)
-	INC_SP             = uint8(0x33)
-	INC_ADDR_HL        = uint8(0x34)
-	DEC_ADDR_HL        = uint8(0x35)
-	LD_ADDR_HL_n       = uint8(0x36)
-	SCF                = uint8(0x37)
-	JR_C_e             = uint8(0x38)
-	ADD_HL_SP          = uint8(0x39)
-	LD_A_ADDR_HL_MINUS = uint8(0x3a)
-	DEC_SP             = uint8(0x3b)
-	INC_A              = uint8(0x3c)
-	DEC_A              = uint8(0x3d)
-	LD_A_n             = uint8(0x3e)
+	JR_NC_e       = uint8(0x30)
+	LD_SP_nn      = uint8(0x31)
+	LD_ADDR_HLD_A = uint8(0x32)
+	INC_SP        = uint8(0x33)
+	INC_ADDR_HL   = uint8(0x34)
+	DEC_ADDR_HL   = uint8(0x35)
+	LD_ADDR_HL_n  = uint8(0x36)
+	SCF           = uint8(0x37)
+	JR_C_e        = uint8(0x38)
+	ADD_HL_SP     = uint8(0x39)
+	LD_A_ADDR_HLD = uint8(0x3a)
+	DEC_SP        = uint8(0x3b)
+	INC_A         = uint8(0x3c)
+	DEC_A         = uint8(0x3d)
+	LD_A_n        = uint8(0x3e)
 
 	LD_B_B       = uint8(0x40)
 	LD_B_C       = uint8(0x41)
@@ -459,8 +459,8 @@ func (c *SM83_CPU) executeInstruction() error {
 	case LD_HL_nn:
 		return c.executeInstruction_LD_XX_nn(&c.h, &c.l, REG_HL)
 
-	case LD_ADDR_HL_PLUS_A:
-		return c.executeInstruction_LD_ADDR_HL_PLUS_A()
+	case LD_ADDR_HLI_A:
+		return c.executeInstruction_LD_ADDR_HLI_A()
 
 	case INC_HL:
 		return c.executeInstruction_INC_XX(&c.h, &c.l, REG_HL)
@@ -483,8 +483,8 @@ func (c *SM83_CPU) executeInstruction() error {
 	case ADD_HL_HL:
 		return c.executeInstruction_ADD_HL_XX(c.h, c.l, REG_HL)
 
-	case LD_A_ADDR_HL_PLUS:
-		return c.executeInstruction_LD_A_ADDR_HL_PLUS()
+	case LD_A_ADDR_HLI:
+		return c.executeInstruction_LD_A_ADDR_HLI()
 
 	case DEC_HL:
 		return c.executeInstruction_DEC_XX(&c.h, &c.l, REG_HL)
@@ -508,8 +508,8 @@ func (c *SM83_CPU) executeInstruction() error {
 	case LD_SP_nn:
 		return c.executeInstruction_LD_XX_nn(&c.s, &c.p, REG_SP)
 
-	case LD_ADDR_HL_MINUS_A:
-		return nil // TODO: implement LD_ADDR_HL_MINUS_A
+	case LD_ADDR_HLD_A:
+		return c.executeInstruction_LD_ADDR_HLD_A()
 
 	case INC_SP:
 		return c.executeInstruction_INC_XX(&c.s, &c.p, REG_SP)
@@ -532,8 +532,8 @@ func (c *SM83_CPU) executeInstruction() error {
 	case ADD_HL_SP:
 		return c.executeInstruction_ADD_HL_XX(c.s, c.p, REG_SP)
 
-	case LD_A_ADDR_HL_MINUS:
-		return nil // TODO: implement LD_A_ADDR_HL_MINUS
+	case LD_A_ADDR_HLD:
+		return c.executeInstruction_LD_A_ADDR_HLD()
 
 	case DEC_SP:
 		return c.executeInstruction_DEC_XX(&c.s, &c.p, REG_SP)
@@ -758,13 +758,13 @@ func (c *SM83_CPU) executeInstruction() error {
 
 		//	instructions 0xf0 - 0xff
 	case LDH_A_ADDR_n:
-		return nil // TODO: implement LDH_A_ADDR_n
+		return c.executeInstruction_LDH_A_ADDR_n()
 
 	case POP_AF:
 		return nil // TODO: implement POP_AF
 
 	case LDH_A_ADDR_C:
-		return nil // TODO: implement LDH_A_ADDR_C
+		return c.executeInstruction_LDH_A_ADDR_C()
 
 	case LD_A_ADDR_nn:
 		return c.executeInstruction_LD_A_ADDR_nn()
