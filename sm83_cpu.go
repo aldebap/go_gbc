@@ -165,6 +165,23 @@ const (
 	LD_A_ADDR_HL = uint8(0x7e)
 	LD_A_A       = uint8(0x7f)
 
+	ADD_B       = uint8(0x80)
+	ADD_C       = uint8(0x81)
+	ADD_D       = uint8(0x82)
+	ADD_E       = uint8(0x83)
+	ADD_H       = uint8(0x84)
+	ADD_L       = uint8(0x85)
+	ADD_ADDR_HL = uint8(0x86)
+	ADD_A       = uint8(0x87)
+	ADC_B       = uint8(0x88)
+	ADC_C       = uint8(0x89)
+	ADC_D       = uint8(0x8a)
+	ADC_E       = uint8(0x8b)
+	ADC_H       = uint8(0x8c)
+	ADC_L       = uint8(0x8d)
+	ADC_ADDR_HL = uint8(0x8e)
+	ADC_A       = uint8(0x8f)
+
 	LDH_ADDR_n_A = uint8(0xe0)
 	POP_HL       = uint8(0xe1)
 	LDH_ADDR_C_A = uint8(0xe2)
@@ -742,6 +759,41 @@ func (c *SM83_CPU) executeInstruction() error {
 
 	case LD_A_A:
 		return c.executeInstruction_LD_X_Y(&c.a, REG_A, c.a, REG_A)
+
+		//	instructions 0x80 - 0x8f
+	case ADD_B:
+	case ADD_C:
+	case ADD_D:
+	case ADD_E:
+	case ADD_H:
+	case ADD_L:
+	case ADD_ADDR_HL:
+	case ADD_A:
+		//	TODO: implement ADD_X
+
+	case ADC_B:
+		return c.executeInstruction_ADC_X(c.b, REG_B)
+
+	case ADC_C:
+		return c.executeInstruction_ADC_X(c.c, REG_C)
+
+	case ADC_D:
+		return c.executeInstruction_ADC_X(c.d, REG_D)
+
+	case ADC_E:
+		return c.executeInstruction_ADC_X(c.e, REG_E)
+
+	case ADC_H:
+		return c.executeInstruction_ADC_X(c.h, REG_H)
+
+	case ADC_L:
+		return c.executeInstruction_ADC_X(c.l, REG_L)
+
+	case ADC_ADDR_HL:
+		return c.executeInstruction_ADC_ADDR_HL()
+
+	case ADC_A:
+		return c.executeInstruction_ADC_X(c.a, REG_A)
 
 		//	instructions 0xe0 - 0xef
 	case LDH_ADDR_n_A:
