@@ -764,15 +764,29 @@ func (c *SM83_CPU) executeInstruction() error {
 
 		//	instructions 0x80 - 0x8f
 	case ADD_B:
+		return c.executeInstruction_ADD_X(c.b, REG_B)
+
 	case ADD_C:
+		return c.executeInstruction_ADD_X(c.c, REG_C)
+
 	case ADD_D:
+		return c.executeInstruction_ADD_X(c.d, REG_D)
+
 	case ADD_E:
+		return c.executeInstruction_ADD_X(c.e, REG_E)
+
 	case ADD_H:
+		return c.executeInstruction_ADD_X(c.h, REG_H)
+
 	case ADD_L:
+		return c.executeInstruction_ADD_X(c.l, REG_L)
+
 	case ADD_ADDR_HL:
-	case ADD_A:
+		//	TODO: implement ADD_ADDR_HL
 		return nil
-		//	TODO: implement ADD_X
+
+	case ADD_A:
+		return c.executeInstruction_ADD_X(c.a, REG_A)
 
 	case ADC_B:
 		return c.executeInstruction_ADC_X(c.b, REG_B)
