@@ -107,8 +107,8 @@ func (c *SM83_CPU) executeInstruction_ADC_ADDR_HL() error {
 	return c.fetchInstruction()
 }
 
-// execute instruction ADC_ADDR_n
-func (c *SM83_CPU) executeInstruction_ADC_ADDR_n() error {
+// execute instruction ADC_n
+func (c *SM83_CPU) executeInstruction_ADC_n() error {
 	var err error
 
 	switch c.cpu_state {
