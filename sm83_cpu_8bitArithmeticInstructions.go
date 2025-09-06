@@ -15,7 +15,7 @@ ADC A,r8  	--> ADC_X       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADC_A,r8)
 ADC A,[HL]  --> ADC_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADC_A,_HL_)
 ADC A,n8    --> ADC_n       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADC_A,n8)
 ADD A,r8    --> ADD_X       (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADD_A,r8)
-ADD A,[HL]
+ADD A,[HL]  --> ADD_ADDR_HL (https://rgbds.gbdev.io/docs/v0.9.4/gbz80.7#ADD_A,_HL_)
 ADD A,n8
 CP A,r8
 CP A,[HL]
@@ -172,6 +172,43 @@ func (c *SM83_CPU) executeInstruction_ADD_X(r uint8, reg string) error {
 
 	if c.trace {
 		fmt.Printf("[trace] ADD %s: 0x%02x\n", reg, r)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction ADD_X
+func (c *SM83_CPU) executeInstruction_ADD_ADDR_HL() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.readByteFromMemory(uint16(c.h)<<8 | uint16(c.l))
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		var aux16 = uint16(c.a) + uint16(c.n_lsb)
+
+		c.flags = 0x00
+
+		if aux16&0x00ff == 0 {
+			c.flags |= FLAG_Z
+		}
+		if (c.a&0x0f)+(c.n_lsb&0x0f) > 0x0f {
+			c.flags |= FLAG_H
+		}
+		if aux16&0xff00 != 0 {
+			c.flags |= FLAG_C
+		}
+
+		c.a = uint8(aux16 & 0x00ff)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] ADD (HL): 0x%02x\n", c.n_lsb)
 	}
 
 	//	fecth next instruction in the same cycle

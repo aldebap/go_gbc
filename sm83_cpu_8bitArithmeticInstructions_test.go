@@ -959,6 +959,321 @@ func Test_ADD_X(t *testing.T) {
 	})
 }
 
+// ADD_ADDR_HL instruction unit tests
+func Test_ADD_ADDR_HL(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> ADD_(HL): scenario 1 - add (HL), without carry out"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_ADDR_HL,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new cartrige ROM memory bank
+		cartridgeRom := &ROM_memory{}
+		if cartridgeRom == nil {
+			t.Errorf("fail creating new cartridge ROM memory")
+		}
+		err = cartridgeRom.Load([]uint8{
+			0x01,
+			0x02,
+			0x1a,
+			0x2b,
+			0x3c,
+			0x4d,
+			0x5e,
+			0x6f,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(cartridgeRom, 0xc000)
+		if err != nil {
+			t.Errorf("fail connecting cartridge ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x00, 0x0c, 0x0000, 0x0000, 0xc001)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0x0a
+		cpu.h = 0xc0
+		cpu.l = 0x01
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_ADDR_HL()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD (HL): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_(HL): scenario 2 - add (HL), without carry out"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_ADDR_HL,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new cartrige ROM memory bank
+		cartridgeRom := &ROM_memory{}
+		if cartridgeRom == nil {
+			t.Errorf("fail creating new cartridge ROM memory")
+		}
+		err = cartridgeRom.Load([]uint8{
+			0x01,
+			0x02,
+			0x1a,
+			0x2b,
+			0x3c,
+			0x4d,
+			0x5e,
+			0x6f,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(cartridgeRom, 0xc000)
+		if err != nil {
+			t.Errorf("fail connecting cartridge ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x00, 0x0c, 0x0000, 0x0000, 0xc001)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0x0a
+		cpu.h = 0xc0
+		cpu.l = 0x01
+		cpu.flags = FLAG_C
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_ADDR_HL()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD (HL): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_(HL): scenario 3 - add (HL), with carry out / zero"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_ADDR_HL,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new cartrige ROM memory bank
+		cartridgeRom := &ROM_memory{}
+		if cartridgeRom == nil {
+			t.Errorf("fail creating new cartridge ROM memory")
+		}
+		err = cartridgeRom.Load([]uint8{
+			0x01,
+			0x02,
+			0x1a,
+			0x2b,
+			0x3c,
+			0x4d,
+			0x5e,
+			0x6f,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(cartridgeRom, 0xc000)
+		if err != nil {
+			t.Errorf("fail connecting cartridge ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0xb0, 0x00, 0x0000, 0x0000, 0xc005)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0xb3
+		cpu.h = 0xc0
+		cpu.l = 0x05
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_ADDR_HL()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD (HL): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_(HL): scenario 4 - add (HL), with carry out / non zero"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_ADDR_HL,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		//	create a new cartrige ROM memory bank
+		cartridgeRom := &ROM_memory{}
+		if cartridgeRom == nil {
+			t.Errorf("fail creating new cartridge ROM memory")
+		}
+		err = cartridgeRom.Load([]uint8{
+			0x01,
+			0x02,
+			0x1a,
+			0x2b,
+			0x3c,
+			0x4d,
+			0x5e,
+			0x6f,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the RAM memory to the CPU
+		err = cpu.ConnectMemory(cartridgeRom, 0xc000)
+		if err != nil {
+			t.Errorf("fail connecting cartridge ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0002, 0x0000, 0x30, 0x10, 0x0000, 0x0000, 0xc005)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0xc3
+		cpu.h = 0xc0
+		cpu.l = 0x05
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_ADDR_HL()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD (HL): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
 // DEC_X instruction unit tests
 func Test_DEC_X(t *testing.T) {
 

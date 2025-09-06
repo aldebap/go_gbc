@@ -782,8 +782,7 @@ func (c *SM83_CPU) executeInstruction() error {
 		return c.executeInstruction_ADD_X(c.l, REG_L)
 
 	case ADD_ADDR_HL:
-		//	TODO: implement ADD_ADDR_HL
-		return nil
+		return c.executeInstruction_ADD_ADDR_HL()
 
 	case ADD_A:
 		return c.executeInstruction_ADD_X(c.a, REG_A)
