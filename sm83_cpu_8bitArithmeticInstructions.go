@@ -178,7 +178,7 @@ func (c *SM83_CPU) executeInstruction_ADD_X(r uint8, reg string) error {
 	return c.fetchInstruction()
 }
 
-// execute instruction ADD_X
+// execute instruction ADD_ADDR_HL
 func (c *SM83_CPU) executeInstruction_ADD_ADDR_HL() error {
 	var err error
 
@@ -209,6 +209,43 @@ func (c *SM83_CPU) executeInstruction_ADD_ADDR_HL() error {
 
 	if c.trace {
 		fmt.Printf("[trace] ADD (HL): 0x%02x\n", c.n_lsb)
+	}
+
+	//	fecth next instruction in the same cycle
+	return c.fetchInstruction()
+}
+
+// execute instruction ADD_n
+func (c *SM83_CPU) executeInstruction_ADD_n() error {
+	var err error
+
+	switch c.cpu_state {
+	case EXECUTION_CYCLE_1:
+		c.n_lsb, err = c.fetchInstructionArgument()
+		c.cpu_state = EXECUTION_CYCLE_2
+
+		return err
+
+	case EXECUTION_CYCLE_2:
+		var aux16 = uint16(c.a) + uint16(c.n_lsb)
+
+		c.flags = 0x00
+
+		if aux16&0x00ff == 0 {
+			c.flags |= FLAG_Z
+		}
+		if (c.a&0x0f)+(c.n_lsb&0x0f) > 0x0f {
+			c.flags |= FLAG_H
+		}
+		if aux16&0xff00 != 0 {
+			c.flags |= FLAG_C
+		}
+
+		c.a = uint8(aux16 & 0x00ff)
+	}
+
+	if c.trace {
+		fmt.Printf("[trace] ADD n: 0x%02x\n", c.n_lsb)
 	}
 
 	//	fecth next instruction in the same cycle

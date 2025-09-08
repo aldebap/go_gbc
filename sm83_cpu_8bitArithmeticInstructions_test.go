@@ -537,8 +537,8 @@ func Test_ADC_ADDR_HL(t *testing.T) {
 	})
 }
 
-// ADC_ADDR_n instruction unit tests
-func Test_ADC_ADDR_n(t *testing.T) {
+// ADC_n instruction unit tests
+func Test_ADC_n(t *testing.T) {
 
 	var err error
 
@@ -1270,6 +1270,217 @@ func Test_ADD_ADDR_HL(t *testing.T) {
 		//	check the invocation result
 		if want != got {
 			t.Errorf("failed executing instruction ADD (HL): expected: %s\n\tresult: %s", want, got)
+		}
+	})
+}
+
+// ADD_n instruction unit tests
+func Test_ADD_n(t *testing.T) {
+
+	var err error
+
+	t.Run(fmt.Sprintf(">>> ADD_n: scenario 1 - add n, without carry out"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_n,
+			0x02,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0003, 0x0000, 0x00, 0x0c, 0x0000, 0x0000, 0x0000)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0x0a
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_n()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD n: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_n: scenario 2 - add n (carry = 1), without carry out"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_n,
+			0x02,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0003, 0x0000, 0x00, 0x0c, 0x0000, 0x0000, 0x0000)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0x0a
+		cpu.flags = FLAG_C
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_n()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD n: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_n: scenario 3 - add n, with carry out / zero"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_n,
+			0x4d,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0003, 0x0000, 0xb0, 0x00, 0x0000, 0x0000, 0x0000)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0xb3
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_n()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD n: expected: %s\n\tresult: %s", want, got)
+		}
+	})
+
+	t.Run(fmt.Sprintf(">>> ADD_n: scenario 4 - add n, with carry out / non zero"), func(t *testing.T) {
+
+		//	create a new SM83 CPU
+		cpu := NewSM83_CPU(trace)
+		if cpu == nil {
+			t.Errorf("fail creating new SM83 CPU")
+		}
+
+		//	create a new ROM memory and load it with the test program
+		rom := &ROM_memory{}
+		if rom == nil {
+			t.Errorf("fail creating new ROM memory")
+		}
+		err = rom.Load([]uint8{
+			ADD_n,
+			0x4d,
+			NOP,
+		})
+		if err != nil {
+			t.Errorf("fail loading test program: %s", err.Error())
+		}
+
+		//	connect the ROM memory to the CPU
+		err = cpu.ConnectMemory(rom, 0x0000)
+		if err != nil {
+			t.Errorf("fail connecting ROM to CPU: %s", err.Error())
+		}
+
+		want := fmt.Sprintf("PC: 0x%04x; SP: 0x%04x; Flags: 0x%02x; A: 0x%02x; BC: 0x%04x; DE: 0x%04x; HL: 0x%04x",
+			0x0003, 0x0000, 0x30, 0x10, 0x0000, 0x0000, 0x0000)
+
+		//	forced fetch instruction + two cicles to execute the instruction
+		cpu.a = 0xc3
+		cpu.pc++
+		cpu.cpu_state = EXECUTION_CYCLE_1
+
+		for i := range 2 {
+			err = cpu.executeInstruction_ADD_n()
+			if err != nil {
+				t.Errorf("fail on cycle %d: %s", i, err.Error())
+			}
+		}
+
+		got := cpu.DumpRegisters()
+
+		//	check the invocation result
+		if want != got {
+			t.Errorf("failed executing instruction ADD n: expected: %s\n\tresult: %s", want, got)
 		}
 	})
 }

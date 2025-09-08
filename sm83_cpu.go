@@ -182,6 +182,7 @@ const (
 	ADC_ADDR_HL = uint8(0x8e)
 	ADC_A       = uint8(0x8f)
 
+	ADD_n = uint8(0xc6)
 	ADC_n = uint8(0xce)
 
 	LDH_ADDR_n_A = uint8(0xe0)
@@ -814,6 +815,9 @@ func (c *SM83_CPU) executeInstruction() error {
 		//	instructions 0x90 - 0x9f
 
 		//	instructions 0xc0 - 0xcf
+	case ADD_n:
+		return c.executeInstruction_ADD_n()
+
 	case ADC_n:
 		return c.executeInstruction_ADC_n()
 
